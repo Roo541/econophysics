@@ -18,7 +18,7 @@ int main()
 {
 	float Goods[num_agents][num_goods]; //creates a 2-d array of agents and number of goods they have
 	for (int a=0;a<num_agents;a++) {
-		for (int g=0;g<=num_goods;g++) {
+		for (int g=0;g<num_goods;g++) {
 			Goods[a][g] = 100;
 		}
 	}
