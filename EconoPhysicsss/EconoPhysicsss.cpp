@@ -17,7 +17,7 @@ float Agent_1(float[num_agents][num_goods], float[]);
 int main()
 {
 	float Goods[num_agents][num_goods]; //creates a 2-d array of agents and number of goods they have
-	for (int a=0;a<=num_agents;a++) {
+	for (int a=0;a<num_agents;a++) {
 		for (int g=0;g<=num_goods;g++) {
 			Goods[a][g] = 100;
 		}
@@ -25,8 +25,10 @@ int main()
 	float Cash[num_agents] = { 1000, 1000, 200, 10, 10 }; //creates array of cash each agent has
 	float calories[num_goods] = { 100, 50, 250, 200, 300 }; // index of calories each good has
 	float number = Agent_1(Goods, Cash); 
-	
+
+#ifdef _WIN32
 	system("Pause");
+#endif
 
 	return 0;
 }
@@ -39,7 +41,7 @@ float Agent_1(float Goods[num_agents][num_goods], float Cash[])
 	float utility_1g = 10;
 	float utility_1Q = (Q / Q0) / ((Q / Q0) - 1);
 	float utility_1I = log(Cash[0]);
-	for (int a = 0;a <= num_goods; a++) {
+	for (int a = 0;a < num_goods; a++) {
 		 float placeholder = (Goods[0][a] / gmax[a]) / ((Goods[0][a] / gmax[a])*(Goods[0][a] / gmax[a]) + 1);
 		 utility_1g = placeholder + (Goods[0][a] / gmax[a]) / ((Goods[0][a] / gmax[a])*(Goods[0][a] / gmax[a]) + 1);
 	}	
