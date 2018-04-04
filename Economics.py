@@ -8,8 +8,10 @@ goods = 5
 goods_index = np.zeros((agents,goods))
 Calories_index = np.zeros((goods,1))
 Bank_Account = np.zeros((agents,1))
-Umax1 = 5000
+Umax1 = 5
 Q0 = 500 #minimum calories needed
+ask = 5
+bid = 5
 for i in range(agents):
 	for j in range(goods):
 		goods_index[i][j]= 10
@@ -57,16 +59,56 @@ for i in range(10):
 	if Ua1[i] == 0 and Ua1[i-1] != 0:
 		alpha = Ua1[i-1]
 	else: i = i + 1
-
-def Buy():
+#Agent1 Buying Price
+def Buy(bid):
+	bid =1
+	return bid
+#Agent1 Selling price
+def Sell(ask):
+	ask = 1
+	return ask
+#market place
+def MarketGood1(a):
+	#Ask
+	askingPrice = a 
+	biddingPrice = 2
+	if askingPrice == biddingPrice:
+		print "sold"
+	else:
+		print "not sold"
 	
-def Sell():
-	
-
+#compares updated utility to maximum utility required	
 if alpha < Umax1 :
-	Buy()
+	b = Buy(bid)
 else:
-	Sell()
+	a = Sell(ask)
+	
+MarketGood1(a)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
