@@ -4,32 +4,32 @@ import matplotlib.pyplot as plt
 
 #global stuff
 agents = 15
-goods = 5
-goods_index = np.zeros((agents,goods))
-Calories_index = np.zeros((goods,1))
-Bank_Account = np.zeros((agents,1))
-Umax1 = 5
-Umax2 = 50000
+Numgoods = 5
+goods = np.zeros((agents,Numgoods))
+Calories = np.zeros((Numgoods,1))
+Bank_Account = np.zeros((agents))
+Umax0 = 5
+Umax1 = 50000
 Q0 = 500 #minimum calories needed
-alpha1 = 10000
-alpha2 = 1
+alpha0 = 10000
+alpha1 = 1
 #Filling out the arrays with initial values
 for i in range(agents):
-	for j in range(goods):
-		goods_index[i][j]= 10
-for i in range(goods):
-	Calories_index[i][0] = 100
+	for j in range(Numgoods):
+		goods[i][j]= 10
+for i in range(Numgoods):
+	Calories[i][0] = 100
 for i in range(agents):
-	Bank_Account[i][0] = 1000
+	Bank_Account[i] = 1000
+Ua0 = [0 for i in range (10)]
 Ua1 = [0 for i in range (10)]
-Ua2 = [0 for i in range (10)]
 
-def Utility1():
-	#Agent 1 Utility update
-	utility_A1 = np.zeros((1,100))
+def Utility0():
+	#Agent 0 Utility update
+	utility_A0 = np.zeros((1,100))
 	utility_Calories = 0
 	g = np.arange(0.0, 750, 0.5)	
-	utilityNew1 = 0
+	utilityNew0 = 0
 	j = 0
 	g1 = 5							#specific good happiness for agent 1 
 	g2 = 7
@@ -38,31 +38,31 @@ def Utility1():
 	g5 = 13
 	while (j < 10):
 		#Calculates utility value at given point in time
-		utility_g1 = 100*(goods_index[0][0]/g1)/((goods_index[0][0]/g1)**2+1)
-		utility_g2 = 100*(goods_index[0][1]/g2)/((goods_index[0][1]/g2)**2+1)
-		utility_g3 = 100*(goods_index[0][2]/g3)/((goods_index[0][2]/g3)**2+1)
-		utility_g4 = 100*(goods_index[0][3]/g4)/((goods_index[0][3]/g4)**2+1)
-		utility_g5 = 100*(goods_index[0][4]/g5)/((goods_index[0][4]/g5)**2+1)
+		utility_g1 = 100*(goods[0][0]/g1)/((goods[0][0]/g1)**2+1)
+		utility_g2 = 100*(goods[0][1]/g2)/((goods[0][1]/g2)**2+1)
+		utility_g3 = 100*(goods[0][2]/g3)/((goods[0][2]/g3)**2+1)
+		utility_g4 = 100*(goods[0][3]/g4)/((goods[0][3]/g4)**2+1)
+		utility_g5 = 100*(goods[0][4]/g5)/((goods[0][4]/g5)**2+1)
 
 		for i in range(goods):
-			utility_Calories = utility_Calories + 100*(goods_index[0][i]*Calories_index[i][0]/Q0)/(goods_index[0][i]*Calories_index[i][0]/Q0+1)
+			utility_Calories = utility_Calories + 100*(goods[0][i]*Calories[i][0]/Q0)/(goods[0][i]*Calories[i][0]/Q0+1)
 
-		#Instantaneous utility for Agent 1 
-		utility_A1 = utility_g1 + utility_g2 + utility_g3 + utility_g4 + utility_g5 + utility_Calories
-		Ua1[j] = utility_A1
+		#Instantaneous utility for Agent 0 
+		utility_A0 = utility_g1 + utility_g2 + utility_g3 + utility_g4 + utility_g5 + utility_Calories
+		Ua0[j] = utility_A0
 		j = j+1
 	for i in range(10):
-		if Ua1[i] == 0 and Ua1[i-1] != 0:
-			utilityNew1 = Ua1[i-1]
+		if Ua0[i] == 0 and Ua0[i-1] != 0:
+			utilityNew0 = Ua0[i-1]
 		else: i = i + 1
-	return utilityNew1
+	return utilityNew0
 
-def Utility2():
+def Utility1():
 	#Agent 1 Utility update
-	utility_A2 = np.zeros((1,100))
+	utility_A1 = np.zeros((1,100))
 	utility_Calories = 0
 	g = np.arange(0.0, 750, 0.5)	
-	utilityNew2 =0
+	utilityNew1 =0
 	j = 0
 	g1 = 1							#specific good happiness for agent 1 
 	g2 = 2
@@ -71,64 +71,74 @@ def Utility2():
 	g5 = 5
 	while (j < 10):
 		#Calculates utility value at given point in time
-		utility_g1 = 100*(goods_index[1][0]/g1)/((goods_index[1][0]/g1)**2+1)
-		utility_g2 = 100*(goods_index[1][1]/g2)/((goods_index[1][1]/g2)**2+1)
-		utility_g3 = 100*(goods_index[1][2]/g3)/((goods_index[1][2]/g3)**2+1)
-		utility_g4 = 100*(goods_index[1][3]/g4)/((goods_index[1][3]/g4)**2+1)
-		utility_g5 = 100*(goods_index[1][4]/g5)/((goods_index[1][4]/g5)**2+1)
+		utility_g1 = 100*(goods[1][0]/g1)/((goods[1][0]/g1)**2+1)
+		utility_g2 = 100*(goods[1][1]/g2)/((goods[1][1]/g2)**2+1)
+		utility_g3 = 100*(goods[1][2]/g3)/((goods[1][2]/g3)**2+1)
+		utility_g4 = 100*(goods[1][3]/g4)/((goods[1][3]/g4)**2+1)
+		utility_g5 = 100*(goods[1][4]/g5)/((goods[1][4]/g5)**2+1)
 
 		for i in range(goods):
-			utility_Calories = utility_Calories + 100*(goods_index[1][i]*Calories_index[i][0]/Q0)/(goods_index[1][i]*Calories_index[i][0]/Q0+1)
+			utility_Calories = utility_Calories + 100*(goods[1][i]*Calories[i][0]/Q0)/(goods[1][i]*Calories[i][0]/Q0+1)
 
 		#Instantaneous utility for Agent 1 
-		utility_A2 = utility_g1 + utility_g2 + utility_g3 + utility_g4 + utility_g5 + utility_Calories
-		Ua2[j] = utility_A2
+		utility_A1 = utility_g1 + utility_g2 + utility_g3 + utility_g4 + utility_g5 + utility_Calories
+		Ua1[j] = utility_A1
 		j = j+1
 		
 	for i in range(10):
-		if Ua2[i] == 0 and Ua2[i-1] != 0:
-			utilityNew2 = Ua2[i-1]
+		if Ua1[i] == 0 and Ua1[i-1] != 0:
+			utilityNew1 = Ua1[i-1]
 		else: i = i + 1
-	return utilityNew2
+	return utilityNew1
 
-def Agent1(goods_index):
-	alpha1 = Utility1()
-	if alpha1 < Umax1:
-		Bid1 = 0						#Must Have some sort of Calculation to determine Ask/Bid Price
-		Ask1 =1
-	if alpha1 > Umax1:
-		Ask1 = 1
-		Bid1 = 0
-	#else:
-		#nothing()
-	return Bid1, Ask1
+#Stubborn Seller 
+def Agent0():			
+	Ask0 = 1
+	price0 = 1
+	return Ask0, randint(0,4)
+	
+#Stubborn Buyer
+def Agent1(Ask0):
+	Bid1 = Ask0
+	price1 = Bid1
+	return Bid1
 
-def Agent2(goods_index):
-	alpha2 = Utility2()
-	if alpha2 < Umax2:
-		Bid2 = 1						#Must Have some sort of Calculation to determine Ask/Bid Price
-		Ask2 = 0
-	if alpha2 > Umax2:
-		Ask2 = 1
-		Bid2 = 0
-	#else:
-		#nothing()
-	return Bid2, Ask2
-
-
-def Market(Bid1, Ask1, Bid2, Ask2):
-	if Ask1 == Bid2:
-		goods_index[0][0] = goods_index[0][0] - 1
-		goods_index[1][0] = goods_index[1][0] + 1
+def Market(Ask0, Bid1, good):
+	if Ask0 == Bid1:
+		price = Ask0
+		goods[0][good] = goods[0][good] - 1
+		goods[1][good] = goods[1][good] + 1
+		Bank_Account[0] = Bank_Account[0] + price
+		Bank_Account[1] = Bank_Account[1] - price
 
 m = 0
 while(m < 10):
-	B1,A1 = Agent1(goods_index)			#Updates Utility and makes Trade proposals
-	B2,A2 = Agent2(goods_index)
-	Market(B1,A1,B2,A2)					#Makes Trades and Updates Utility
+	A0,gRand = Agent0()			#Updates Utility and makes Trade proposals
+	B1 = Agent1(A0)
+	Market(A0, B1, gRand)				#Makes Trades and Updates goods and bank account
 	m = m + 1
 
-print goods_index
+print goods[:2]
+print Bank_Account[:2]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
