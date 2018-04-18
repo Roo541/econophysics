@@ -1,6 +1,7 @@
 import numpy as np
 from random import randint
 import matplotlib.pyplot as plt
+import copy
 
 #global stuff
 agents = 15
@@ -91,35 +92,88 @@ def Utility1():
 		else: i = i + 1
 	return utilityNew1
 
-#Stubborn Seller 
-def Agent0():			
-	Ask0 = 1
-	price0 = 1
-	return Ask0, randint(0,4)
-	
+# TODO
+#
+# 1. Implement another agent.
+#
+# 2. Increase number of agents.
+#
+# 3. Add output in case of things that aren't bids or asks.
+#
+# 4. THINK about how to start making a practical agent (using utility, etc).
+#
+# 5. Fix bug where a given offer is taken up twice! (need to reset offers value)
+
+#Stubborn Seller
+def Agent0(my_id, offers, old_offers):
+	Ask0 = randint(1,10)
+	return 'ask', Ask0, randint(0,4)
+
 #Stubborn Buyer
-def Agent1(Ask0):
-	Bid1 = Ask0
-	price1 = Bid1
-	return Bid1
+def Agent1(my_id, offers, old_offers):
+	price = randint(0,10)
+        good = randint(0,4)
+	return 'bid', price, good
 
-def Market(Ask0, Bid1, good):
-	if Ask0 == Bid1:
-		price = Ask0
-		goods[0][good] = goods[0][good] - 1
-		goods[1][good] = goods[1][good] + 1
-		Bank_Account[0] = Bank_Account[0] + price
-		Bank_Account[1] = Bank_Account[1] - price
+#Shopping addict
+def shopping_addict(my_id, offers, old_offers):
+        for i in range(len(offers)):
+                if i != my_id and offers[i][0] == 'ask':
+                        return 'bid', offers[i][1], offers[i][2]
+	price = randint(0,10)
+        good = randint(0,4)
+	return 'bid', price, good
 
-m = 0
-while(m < 10):
-	A0,gRand = Agent0()			#Updates Utility and makes Trade proposals
-	B1 = Agent1(A0)
-	Market(A0, B1, gRand)				#Makes Trades and Updates goods and bank account
-	m = m + 1
+def Market(agents):
+        t = 0
+        old_offers = []
+        offers = [('none',0,0)]*len(agents)
+        while t < 10:
+                print '                             offers are', offers
+                print 'IT IS NOW ROUND', t
+                for i in range(len(agents)):
+                        choice, price, good = agents[i](i, offers, old_offers)
+                        offers[i] = (choice, price, good)
+                        if choice == 'ask':
+                                print '   agent', i, 'asks $%d' % price, 'for good', good
+                                if goods[i][good] < 1:
+                                        print 'SILLY AGENT', i, 'you have no', good, '!!!!!'
+                                else:
+                                        for j in range(len(agents)):
+                                                if j != i:
+                                                        if offers[j] == ('bid', price, good) and Bank_Account[j] >= price:
+                                                                print 'We MATCH!!!'
+                                                                goods[i][good] = goods[i][good] - 1
+                                                                goods[j][good] = goods[j][good] + 1
+                                                                Bank_Account[i] = Bank_Account[i] + price
+                                                                Bank_Account[j] = Bank_Account[j] - price
+                        elif choice == 'bid':
+                                print '   agent', i, 'bids $%d' % price, 'for good', good
+                                if Bank_Account[i] < price:
+                                        print 'SILLY AGENT', i, "you don't have $%d" % price, '!!!!!'
+                                else:
+                                        for j in range(len(agents)):
+                                                if j != i:
+                                                        if offers[j] == ('ask', price, good) and goods[j][good] > 1:
+                                                                print 'We MATCH!!!'
+                                                                goods[i][good] = goods[i][good] + 1
+                                                                goods[j][good] = goods[j][good] - 1
+                                                                Bank_Account[i] = Bank_Account[i] - price
+                                                                Bank_Account[j] = Bank_Account[j] + price
+                        else:
+                                pass
 
-print goods[:2]
-print Bank_Account[:2]
+	        # A0,gRand = Agent0()			#Updates Utility and makes Trade proposals
+	        # B1 = Agent1(A0)
+	        # Market(A0, B1, gRand)				#Makes Trades and Updates goods and bank account
+	        t = t + 1
+                old_offers.append(copy.copy(offers))
+
+my_agents = [Agent0, shopping_addict, shopping_addict]
+Market(my_agents)
+
+print goods[:len(my_agents)]
+print Bank_Account[:len(my_agents)]
 
 
 
