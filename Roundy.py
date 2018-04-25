@@ -111,7 +111,7 @@ def Utility0():
 		else: i = i + 1
 	return good, choice
 
-def Utility1():
+def Utility1(my_id, my_goods):
 	#Agent 1 Utility update
 	utility_A1 = np.zeros((1,100))
 	utility_Calories = 0
@@ -123,78 +123,27 @@ def Utility1():
 	g2 = 3
 	g3 = 4
 	g4 = 5
-	while (j < 10):
-		#Calculates utility value at given point in time
-		utility_g0 = 100*(goods[1][0]/g0)/((goods[1][0]/g0)**2+1)
-		utility_g1 = 100*(goods[1][1]/g1)/((goods[1][1]/g1)**2+1)
-		utility_g2 = 100*(goods[1][2]/g2)/((goods[1][2]/g2)**2+1)
-		utility_g3 = 100*(goods[1][3]/g3)/((goods[1][3]/g3)**2+1)
-		utility_g4 = 100*(goods[1][4]/g4)/((goods[1][4]/g4)**2+1)
 
-		for i in range(goods):
-			utility_Calories = utility_Calories + 100*(goods[1][i]*Calories[i][0]/Q0)/(goods[1][i]*Calories[i][0]/Q0+1)
+	#Calculates utility value at given point in time
+	utility_g0 = 100*(my_goods[0]/g0)/((my_goods[0]/g0)**2+1)
+	utility_g1 = 100*(my_goods[1]/g1)/((my_goods[1]/g1)**2+1)
+	utility_g2 = 100*(my_goods[2]/g2)/((my_goods[2]/g2)**2+1)
+	utility_g3 = 100*(my_goods[3]/g3)/((my_goods[3]/g3)**2+1)
+	utility_g4 = 100*(my_goods[4]/g4)/((my_goods[4]/g4)**2+1)
 
-		#ideal Utility per good
-		Ideal_g0 = 100*(g0/g0)/((g0/g0)**2+1)
-		Ideal_g1 = 100*(g1/g1)/((g1/g1)**2+1)
-		Ideal_g2 = 100*(g2/g2)/((g2/g2)**2+1)
-		Ideal_g3 = 100*(g3/g3)/((g3/g3)**2+1)
-		Ideal_g4 = 100*(g4/g4)/((g4/g4)**2+1)
-		
-		#Instantaneous utility for Agent 1 
-		utility_A1 = utility_g0 + utility_g1 + utility_g2 + utility_g3 + utility_g4 + utility_Calories
-		Ua1[j] = utility_A1
-		j = j+1
-		
-		#finding whether to ask or bid on which good
-		#~ if Ua0[j] < Umax0 :
-			#~ if Ideal_g0 > utility_g0
-			#~ good = 0
-			#~ choice = 'bid'
-			#~ break
-			#~ if Ideal_g1 > utility_g1
-			#~ good = 1
-			#~ choice = 'bid'
-			#~ break
-			#~ if Ideal_g2 > utility_g2
-			#~ good = 2
-			#~ choice = 'bid'
-			#~ break
-			#~ if Ideal_g3 > utility_g3
-			#~ good = 3
-			#~ choice = 'bid'
-			#~ break
-			#~ if Ideal_g4 > utility_g4
-			#~ good = 4
-			#~ choice = 'bid'
-			#~ break
-		#~ else: Ua0[j] > Umax0
-			#~ if Ideal_g0 < utility_g0
-			#~ good = 0
-			#~ choice = 'ask'
-			#~ break
-			#~ if Ideal_g1 < utility_g1
-			#~ good = 1
-			#~ choice = 'ask'
-			#~ break
-			#~ if Ideal_g2 < utility_g2
-			#~ good = 2
-			#~ choice = 'ask'
-			#~ break
-			#~ if Ideal_g3 < utility_g3
-			#~ good = 3
-			#~ choice = 'ask'
-			#~ break
-			#~ if Ideal_g4 < utility_g4
-			#~ good = 4
-			#~ choice = 'ask'		
-			#~ break	
-		
-	for i in range(10):
-		if Ua1[i] == 0 and Ua1[i-1] != 0:
-			utilityNew1 = Ua1[i-1]
-		else: i = i + 1
-	return choice, good
+	for i in range(len(my_goods)):
+		utility_Calories = utility_Calories + 100*(my_goods[i]*Calories[i][0]/Q0)/(my_goods[i]*Calories[i][0]/Q0+1)
+
+	#ideal Utility per good
+	Ideal_g0 = 100*(g0/g0)/((g0/g0)**2+1)
+	Ideal_g1 = 100*(g1/g1)/((g1/g1)**2+1)
+	Ideal_g2 = 100*(g2/g2)/((g2/g2)**2+1)
+	Ideal_g3 = 100*(g3/g3)/((g3/g3)**2+1)
+	Ideal_g4 = 100*(g4/g4)/((g4/g4)**2+1)
+
+	#Instantaneous utility for Agent 1 
+	utility_A1 = utility_g0 + utility_g1 + utility_g2 + utility_g3 + utility_g4 + utility_Calories
+        return utility_A1
 
 # TODO
 #
@@ -237,6 +186,14 @@ def Agent2(my_id, offers, old_offers):
 	price = randint(1,10)
 	good = 4
 	return 'ask', price, good
+
+def smart_agent(my_id, offers, old_offers):
+        U = my_utilities[my_id]
+        print '    smart agent utility is', U(my_id, goods[my_id])
+        possible_goods = 1*goods[my_id]
+        possible_goods[1] += 1
+        print '    smart agent utility if they buy a 1 is', U(my_id, possible_goods)
+        return 'none', 0, 0
 
 #Shopping addict
 def shopping_addict(my_id, offers, old_offers):
@@ -303,7 +260,8 @@ def Market(agents):
 
                
 
-my_agents = [shopping_addict, Agent1, Agent2, Agent0]
+my_agents = [shopping_addict, smart_agent, Agent1, Agent2, Agent0]
+my_utilities = [Utility1, Utility1, Utility1, Utility1, Utility1]
 old_offers = Market(my_agents)
 
 print goods[:len(my_agents)]
