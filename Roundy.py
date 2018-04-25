@@ -145,7 +145,7 @@ def Utility1(my_id, my_goods):
 	utility_A1 = utility_g0 + utility_g1 + utility_g2 + utility_g3 + utility_g4 + utility_Calories
         return utility_A1
 
-# TODO
+# TODO (old)
 #
 # 1. Implement another agent. check
 #
@@ -156,6 +156,16 @@ def Utility1(my_id, my_goods):
 # 4. THINK about how to start making a practical agent (using utility, etc). check
 #
 # 5. Fix bug where a given offer is taken up twice! (need to reset offers value) check
+
+# TODO
+#
+# 1. Try to make smart_agent smart
+#
+# 2. Print something in case of things that aren't bids or asks.
+#
+# 3. Possibly make a different utility function (simpler?)
+#
+# 4. Create utility plots? How to visualize it?
 
 def shufflerange(n):
         return random.sample(range(n), k=n)
