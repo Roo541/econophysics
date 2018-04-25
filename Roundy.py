@@ -1,5 +1,6 @@
 import numpy as np
 from random import randint
+import random
 import matplotlib.pyplot as plt
 import copy
 
@@ -207,9 +208,12 @@ def Utility1():
 #
 # 5. Fix bug where a given offer is taken up twice! (need to reset offers value) check
 
+def shufflerange(n):
+        return random.sample(range(n), k=n)
+
 #Stubborn Seller
 def Agent0(my_id, offers, old_offers):
-	Ask0 = randint(1,10)
+	Ask0 = random.randint(1,10)
 	return 'ask', Ask0, randint(0,4)
 
 #Stubborn Buyer
@@ -226,27 +230,29 @@ def Agent2(my_id, offers, old_offers):
 			price = offers[i][1]
 			good = offers[i][2]
 			return 'bid', price, good
-		else: 
-			price = randint(1,10)
-			good = 4
-			return 'ask', price, good 	
-	
-	
+		if i != my_id and offers[i][0] == 'bid' and offers[i][2] == 4:
+			price = offers[i][1]
+			good = offers[i][2]
+			return 'ask', price, good
+	price = randint(1,10)
+	good = 4
+	return 'ask', price, good
+
 #Shopping addict
 def shopping_addict(my_id, offers, old_offers):
         for i in range(len(offers)):
-			if i != my_id and offers[i][0] == 'ask':
-					return 'bid', offers[i][1], offers[i][2] 	#shopping addict just returns a. Wants to buy anything
-			else: return 0,0,0		
-				
-	
+		if i != my_id and offers[i][0] == 'ask':
+			return 'bid', offers[i][1], offers[i][2] 	#shopping addict just returns a. Wants to buy anything
+        print "     NOTHING TO BUY, I'm SO SAD!", offers
+	return 0,0,0
+
+
 def Market(agents):
         t = 0
         old_offers = []
         offers = [('none',0,0)]*len(agents)
         while t < 25:
-                offers = [('none',0,0)]*len(agents)
-                #~ print 'offers are', offers
+                print 'offers are', offers
                 print 'IT IS NOW ROUND', t
                 for i in range(len(agents)):
                         choice, price, good = agents[i](i, offers, old_offers)						#sends agent i his own id and returns: choice, price, good
@@ -255,10 +261,9 @@ def Market(agents):
                                 print '   agent', i, 'asks $%d' % price, 'for good', good
                                 if goods[i][good] <= 0:												#checking if seller has that quantity of good
                                         print 'SILLY AGENT', i, "you don't have enough of good", good, '!!!!!'
-                                        offers = [('none',0,0)]*len(agents)
-                                        break
+                                        offers[i] = ('none',0,0)
                                 else:
-                                        for j in range(len(agents)):
+                                        for j in shufflerange(len(agents)):
                                                 if j != i:											#checking for any buyers other than selling agent
                                                         if offers[j] == ('bid', price, good) and Bank_Account[j] >= price:	#checks if buyer has enough money to purchase good
                                                                 print 'We MATCH!!!'
@@ -267,14 +272,16 @@ def Market(agents):
                                                                 Bank_Account[i] = Bank_Account[i] + price
                                                                 Bank_Account[j] = Bank_Account[j] - price
                                                                 #~ old_offers[i] = offers[j]
-                                                                offers =[('none',0,0)]*len(agents)
+                                                                offers[i] = ('none',0,0)
+                                                                offers[j] = ('none',0,0)
                                                                 break
                         elif choice == 'bid':
                                 print '   agent', i, 'bids $%d' % price, 'for good', good
                                 if Bank_Account[i] < price:
                                         print 'SILLY AGENT', i, "you don't have $%d" % price, '!!!!!'
+                                        offers[i] = ('none',0,0)
                                 else:
-                                        for j in range(len(agents)):
+                                        for j in shufflerange(len(agents)):
                                                 if j != i:
                                                         if offers[j] == ('ask', price, good) and goods[j][good] > 1:
                                                                 print 'We MATCH!!!'
@@ -282,7 +289,9 @@ def Market(agents):
                                                                 goods[j][good] = goods[j][good] - 1
                                                                 Bank_Account[i] = Bank_Account[i] - price
                                                                 Bank_Account[j] = Bank_Account[j] + price
-                                                                offers =[('none',0,0)]*len(agents)
+                                                                offers[i] = ('none',0,0)
+                                                                offers[j] = ('none',0,0)
+                                                                break
                         else:
                                 pass
 
@@ -294,7 +303,7 @@ def Market(agents):
 
                
 
-my_agents = [Agent0, Agent1, Agent2, shopping_addict]
+my_agents = [shopping_addict, Agent1, Agent2, Agent0]
 old_offers = Market(my_agents)
 
 print goods[:len(my_agents)]
