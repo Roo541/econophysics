@@ -104,13 +104,14 @@ def Utility1(my_id, my_goods):
 
 # TODO
 #
-# 1. Try to make smart_agent smart check
+# 1. Try to make smart_agent buy and sell (monetary_desperation = mu?)
 #
-# 2. Print something in case of things that aren't bids or asks. check
+# 2. Possibly make a different utility function (simpler?).  Or make
+#    the utility function work with different preferences based on my_id.
 #
-# 3. Possibly make a different utility function (simpler?)
+# 3. Create utility vs. time plots for everyone? All on same plot with legend?
 #
-# 4. Create utility plots? How to visualize it? check
+# 4. Create utility vs. goods plots, having it use Utility1 itself to compute values.
 def update(my_id):
         U = my_utilities[my_id]
         update = U(my_id, goods[my_id])
@@ -156,7 +157,7 @@ def shufflerange(n):
         return random.sample(range(n), k=n)
         
 #Smart Agent
-def smart_agent(my_id, offers, old_offers):
+def smart_agent(my_id, offers, old_offers, old_transactions):
         choice, my_price, good = compare(my_id)
         print "smart agents choice is", choice
         for i in range(len(offers)):
@@ -173,7 +174,7 @@ def smart_agent(my_id, offers, old_offers):
                         return 'ask', their_price, good
         return choice, my_price, good
 
-def stubborn_seller(my_id, offers, old_offers):
+def stubborn_seller(my_id, offers, old_offers, old_transactions):
         goodnum = randint(0,4)
         for i in range(20):
                 if goods[my_id][goodnum] == 0:
@@ -181,14 +182,14 @@ def stubborn_seller(my_id, offers, old_offers):
 	Ask0 = random.randint(1,10)
 	return 'ask', Ask0, goodnum
 
-def stubborn_buyer(my_id, offers, old_offers):
+def stubborn_buyer(my_id, offers, old_offers, old_transactions):
 	price = randint(1,10)
 	good = randint(0,4)
 	#choice, good = Utility0 
 	return 'bid', price, good
 
 #Only Buys good 0 and Sells good 4
-def picky_agent(my_id, offers, old_offers):
+def picky_agent(my_id, offers, old_offers, old_transactions):
 	for i in range(len(offers)):
 		if i != my_id and offers[i][0] == 'ask' and offers[i][2] == 0:
 			price = offers[i][1]
@@ -203,7 +204,7 @@ def picky_agent(my_id, offers, old_offers):
 	return 'ask', price, good
 
 #Shopping addict
-def shopping_addict(my_id, offers, old_offers):
+def shopping_addict(my_id, offers, old_offers, old_transactions):
         for i in range(len(offers)):
 		if i != my_id and offers[i][0] == 'ask':
 			return 'bid', offers[i][1], offers[i][2] 	#shopping addict just returns a. Wants to buy anything
@@ -214,13 +215,15 @@ def shopping_addict(my_id, offers, old_offers):
 def Market(agents):
         t = 0
         old_offers = []
+        old_transactions = []
         offers = [('none',0,0)]*len(agents)
         while t < 100:
                 smartU[t] = update(3)
                 print 'offers are', offers
                 print 'IT IS NOW ROUND', t
                 for i in shufflerange(len(agents)):
-                        choice, price, good = agents[i](i, offers, old_offers)						#sends agent i his own id and returns: choice, price, good
+                        #the following sends agent i his own id and returns: choice, price, good
+                        choice, price, good = agents[i](i, offers, old_offers, old_transactions)
                         offers[i] = (choice, price, good)											#starts with agent0
                         if choice == 'ask':
                                 print '   *** ', agent_names[i], i, 'asks $%d' % price, 'for good', good
@@ -237,6 +240,7 @@ def Market(agents):
                                                                 Bank_Account[i] = Bank_Account[i] + price
                                                                 Bank_Account[j] = Bank_Account[j] - price
                                                                 #~ old_offers[i] = offers[j]
+                                                                old_transactions.append((price,good))
                                                                 offers[i] = ('none',0,0)
                                                                 offers[j] = ('none',0,0)
                                                                 break
@@ -254,6 +258,7 @@ def Market(agents):
                                                                 goods[j][good] = goods[j][good] - 1
                                                                 Bank_Account[i] = Bank_Account[i] - price
                                                                 Bank_Account[j] = Bank_Account[j] + price
+                                                                old_transactions.append((price,good))
                                                                 offers[i] = ('none',0,0)
                                                                 offers[j] = ('none',0,0)
                                                                 break
@@ -285,39 +290,48 @@ plt.plot(smartU)
 plt.title('smart agents utility')
 plt.xlabel('time')
 plt.ylabel('utils')
-plt.show()
 
 
 
-#~ #creating utility function depending on calories
-#~ Q = np.arange(0.0, 5000.0, 0.5)
-#~ utility_Calories = 100*(Q / Q0) / ((Q / Q0) + 1) 
+#creating utility function depending on calories
+plt.figure()
+Q = np.arange(0.0, 5000.0, 0.5)
+utility_Calories = 100*(Q / Q0) / ((Q / Q0) + 1) 
 #creating utility function for goods 1-5
-#~ g = np.arange(0.0, 50, 1)
-#~ g0 = 5
-#~ g1 = 7
-#~ g2 = 9
-#~ g3 = 11
-#~ g4 = 13
-#~ #smart Agents Utility
-#~ utility_g0 = 100*(g/g0)/((g/g0)**2+1)
-#~ utility_g1 = 100*(g/g1)/((g/g1)**2+1)
-#~ utility_g2 = 100*(g/g2)/((g/g2)**2+1)
-#~ utility_g3 = 100*(g/g3)/((g/g3)**2+1)
-#~ utility_g4 = 100*(g/g4)/((g/g4)**2+1)
-#~ plt.plot(g,utility_g0)
-#~ plt.plot(g,utility_g1)
-#~ plt.plot(g,utility_g2)
-#~ plt.plot(g,utility_g3)
-#~ plt.plot(g,utility_g4)
-#~ plt.title('Utility as a Function of goods')
-#~ plt.xlabel('Quantity of good')
-#~ plt.ylabel('Utils')
-#~ plt.show()
+g = np.arange(0.0, 50, 1)
+g0 = 5
+g1 = 7
+g2 = 9
+g3 = 11
+g4 = 13
+#smart Agents Utility
+utility_g0 = 100*(g/g0)/((g/g0)**2+1)
+utility_g1 = 100*(g/g1)/((g/g1)**2+1)
+utility_g2 = 100*(g/g2)/((g/g2)**2+1)
+utility_g3 = 100*(g/g3)/((g/g3)**2+1)
+utility_g4 = 100*(g/g4)/((g/g4)**2+1)
+plt.plot(g,utility_g0, label='good 0')
+plt.plot(g,utility_g1, label='good 1')
+plt.plot(g,utility_g2, label='good 2')
+plt.plot(g,utility_g3, label='good 3')
+plt.plot(g,utility_g4, label='good 4')
+plt.legend()
+plt.title('Utility as a Function of goods')
+plt.xlabel('Quantity of good')
+plt.ylabel('Utils')
 
-#~ #graphing Calorie Utility
-#~ plt.plot(Q,utility_Calories)
-#~ plt.title('Utility as a Function of Calories')
-#~ plt.xlabel('Calories')
-#~ plt.ylabel('Utils')
-#~ plt.show()
+#graphing Calorie Utility
+plt.figure()
+plt.plot(Q,utility_Calories)
+plt.title('Utility as a Function of Calories')
+plt.xlabel('Calories')
+plt.ylabel('Utils')
+
+
+
+
+
+
+
+
+plt.show()
