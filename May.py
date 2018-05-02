@@ -124,8 +124,8 @@ def compare (my_id):
         U = my_utilities[my_id]
         Org = U(my_id, goods[my_id])
         print "smart agents original utility is", Org
-        possible_goods =1*goods[my_id]
         for i in range(4):
+                possible_goods =1*goods[my_id]
                 possible_goods[i] += 1
                 BuyingU = U(my_id, possible_goods)
                 if BuyingU > Org and BuyingU > B:
@@ -133,15 +133,15 @@ def compare (my_id):
                         choice = 'bid'
                         price = randint(1,10)
                         good = i
-        possible_goods = 1*goods[my_id]
         for i in range(4):
+                possible_goods = 1*goods[my_id]
                 possible_goods[i] -= 1
                 AskingU = U(my_id, possible_goods)
                 if AskingU > Org and AskingU > A:
                         A = AskingU
                         choice1 = 'ask'
                         price1 = randint(1,10)
-                        good1 = i                        
+                        good1 = i
         if  A > B:
                 choice = 'ask'
                 price = price1
@@ -157,24 +157,22 @@ def shufflerange(n):
         
 #Smart Agent
 def smart_agent(my_id, offers, old_offers):
-        choice, price, good = compare(my_id)
+        choice, my_price, good = compare(my_id)
         print "smart agents choice is", choice
         for i in range(len(offers)):
-		if i != my_id and choice == 'bid' and offers[i][0] == 'ask' and offers[i][2] == good:
-			price = offers[i][1]
-			good = offers[i][2]
+                their_good = offers[i][2]
+                their_price = offers[i][1]
+		if i != my_id and choice == 'bid' and offers[i][0] == 'ask' and their_good == good and their_price <= my_price:
                         print "smart agent is making a bid"
-                        return 'bid', price, good
+                        return 'bid', their_price, good
         for i in range(len(offers)):
-		if i != my_id and choice == 'ask' and offers[i][0] == 'bid' and offers[i][2] == good:
-			price = offers[i][1]
-			good = offers[i][2]
+                their_good = offers[i][2]
+                their_price = offers[i][1]
+		if i != my_id and choice == 'ask' and offers[i][0] == 'bid' and their_good == good and their_price >= my_price:
                         print "smart agent is proposing an ask"
-                        return 'ask', price, good
-        price = 0
-        good = 0
-        return 'none', price, good
-        
+                        return 'ask', their_price, good
+        return choice, my_price, good
+
 #Stubborn Seller
 def Agent0(my_id, offers, old_offers):
 	Ask0 = random.randint(1,10)
@@ -281,7 +279,7 @@ print smartU
 #graphing smart agents utility 
 plt.plot(smartU)
 plt.title('smart agents utility')
-plt.xlabel('goods')
+plt.xlabel('time')
 plt.ylabel('utils')
 plt.show()
 
