@@ -173,20 +173,22 @@ def smart_agent(my_id, offers, old_offers):
                         return 'ask', their_price, good
         return choice, my_price, good
 
-#Stubborn Seller
-def Agent0(my_id, offers, old_offers):
+def stubborn_seller(my_id, offers, old_offers):
+        goodnum = randint(0,4)
+        for i in range(20):
+                if goods[my_id][goodnum] == 0:
+                        goodnum = randint(0,4)
 	Ask0 = random.randint(1,10)
-	return 'ask', Ask0, randint(0,4)
+	return 'ask', Ask0, goodnum
 
-#Stubborn Buyer
-def Agent1(my_id, offers, old_offers):
+def stubborn_buyer(my_id, offers, old_offers):
 	price = randint(1,10)
 	good = randint(0,4)
 	#choice, good = Utility0 
 	return 'bid', price, good
-	
+
 #Only Buys good 0 and Sells good 4
-def Agent2(my_id, offers, old_offers):
+def picky_agent(my_id, offers, old_offers):
 	for i in range(len(offers)):
 		if i != my_id and offers[i][0] == 'ask' and offers[i][2] == 0:
 			price = offers[i][1]
@@ -217,11 +219,11 @@ def Market(agents):
                 smartU[t] = update(3)
                 print 'offers are', offers
                 print 'IT IS NOW ROUND', t
-                for i in range(len(agents)):
+                for i in shufflerange(len(agents)):
                         choice, price, good = agents[i](i, offers, old_offers)						#sends agent i his own id and returns: choice, price, good
                         offers[i] = (choice, price, good)											#starts with agent0
                         if choice == 'ask':
-                                print '   agent', i, 'asks $%d' % price, 'for good', good
+                                print '   *** ', agent_names[i], i, 'asks $%d' % price, 'for good', good
                                 if goods[i][good] <= 0:												#checking if seller has that quantity of good
                                         print 'SILLY AGENT', i, "you don't have enough of good", good, '!!!!!'
                                         offers[i] = ('none',0,0)
@@ -239,7 +241,7 @@ def Market(agents):
                                                                 offers[j] = ('none',0,0)
                                                                 break
                         elif choice == 'bid':
-                                print '   agent', i, 'bids $%d' % price, 'for good', good
+                                print '   *** ', agent_names[i], i, 'bids $%d' % price, 'for good', good
                                 if Bank_Account[i] < price:
                                         print 'SILLY AGENT', i, "you don't have $%d" % price, '!!!!!'
                                         offers[i] = ('none',0,0)
@@ -256,7 +258,7 @@ def Market(agents):
                                                                 offers[j] = ('none',0,0)
                                                                 break
                         else:
-                                print 'No offers done'
+                                print '   *** ', agent_names[i], i, 'makes no offer'
 
 	        # A0,gRand = Agent0()			#Updates Utility and makes Trade proposals
 	        # B1 = Agent1(A0)
@@ -267,12 +269,14 @@ def Market(agents):
 
                
 
-my_agents = [Agent1, Agent2, Agent0, smart_agent, shopping_addict]
+agent_names = ["stubborn_buyer", "picky_agent", "stubborn_seller", "smart_agent", "shopping_addict"]
+my_agents = [stubborn_buyer, picky_agent, stubborn_seller, smart_agent, shopping_addict]
 my_utilities = [Utility1, Utility1, Utility1, Utility1, Utility1]
 old_offers = Market(my_agents)
 
 
-print goods[:len(my_agents)]
+for i in range(len(my_agents)):
+        print '  -- ', goods[i], agent_names[i], i
 print Bank_Account[:len(my_agents)]
 print smartU
 
