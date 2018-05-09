@@ -32,31 +32,31 @@ def Utility1(my_id, my_goods):
 	utilityNew1 =0
 	j = 0
 	if my_id == 0 or my_id == 1 or my_id == 2 or my_id == 4:
-		g0 = randint(25,50)
+		g0 = 40
 		g1 = 15
 		g2 = 15
 		g3 = 15
-		g4 = randint(25,50)
+		g4 = 30
 
 	if my_id == 3:
-	    g0 = randint(10,20)
+	    g0 = 20
 	    g1 = 1
-	    g2 = randint(10,20)
-	    g3 = randint(10,20)
+	    g2 = 10
+	    g3 = 15
 	    g4 = 1
 	if my_id == 5:
-		g0 = randint(1,20)
-		g1 = randint(1,20)
-		g2 = randint(1,20)
-		g3 = randint(1,20)
-		g4 = randint(1,20)
+		g0 = 20
+		g1 = 10
+		g2 = 5
+		g3 = 10
+		g4 = 20
 
 	#Calculates utility value at given point in time
-	utility_g0 = 100*(my_goods[0]/g0)/((my_goods[0]/g0)**2+1)
-	utility_g1 = 100*(my_goods[1]/g1)/((my_goods[1]/g1)**2+1)
-	utility_g2 = 100*(my_goods[2]/g2)/((my_goods[2]/g2)**2+1)
-	utility_g3 = 100*(my_goods[3]/g3)/((my_goods[3]/g3)**2+1)
-	utility_g4 = 100*(my_goods[4]/g4)/((my_goods[4]/g4)**2+1)
+	utility_g0 = 100*(my_goods[0]/g0)/np.sqrt((my_goods[0]/g0)**2+1)
+	utility_g1 = 100*(my_goods[1]/g1)/np.sqrt((my_goods[1]/g1)**2+1)
+	utility_g2 = 100*(my_goods[2]/g2)/np.sqrt((my_goods[2]/g2)**2+1)
+	utility_g3 = 100*(my_goods[3]/g3)/np.sqrt((my_goods[3]/g3)**2+1)
+	utility_g4 = 100*(my_goods[4]/g4)/np.sqrt((my_goods[4]/g4)**2+1)
 
 	# ~ for i in range(len(my_goods)):
 		# ~ utility_Calories = utility_Calories + 100*(my_goods[i]*Calories[i][0]/Q0)/(my_goods[i]*Calories[i][0]/Q0+1)
@@ -74,14 +74,11 @@ def Utility1(my_id, my_goods):
 
 # TODO
 #
-# 1. Try to make smart_agent buy and sell (monetary_desperation = mu?) no MU but he now sells stuff too
+# 1. Try to make smart_agent use offers and prices to buy and sell
+#    (monetary_desperation = mu?).
 #
-# 2. Possibly make a different utility function (simpler?).  Or make		works with my_id but not simpler
-#    the utility function work with different preferences based on my_id.
-#
-# 3. Create utility vs. time plots for everyone? All on same plot with legend? check
-#
-# 4. Create utility vs. goods plots, having it use Utility1 itself to compute values.
+# 2. Make utility function use arrays as inputs, maybe also have different asymptotes.
+
 def update(my_id):
         U = my_utilities[my_id]
         update = U(my_id, goods[my_id])
@@ -119,6 +116,7 @@ def compare (my_id):
 	    choice = 'ask'
 	    price = price1
 	    good = good1
+            print 'compare is recommending an ask'
 	return choice, price, good
 
 def shufflerange(n):
@@ -256,6 +254,17 @@ def Market(agents):
 agent_names = ["stubborn_buyer", "picky_agent", "stubborn_seller", "smart_agent", "shopping_addict", "other"]
 my_agents = [stubborn_buyer, picky_agent, stubborn_seller, smart_agent, shopping_addict, other]
 my_utilities = [Utility1, Utility1, Utility1, Utility1, Utility1, Utility1]
+my_preferences = [
+        [3,3,3,3,3],
+        [3,3,3,3,3],
+        [3,3,3,3,3],
+        [3,3,3,3,3],
+        [3,3,3,3,3],
+        [3,3,3,3,3],
+        [3,3,3,3,3],
+        [3,3,3,3,3],
+        [3,3,3,3,3],
+]
 old_offers = Market(my_agents)
 
 
@@ -277,6 +286,30 @@ for i in range(len(my_agents)):
 	plt.xlabel('time')
 	plt.ylabel('utils')
 plt.legend(handles = [A[0], A[1], A[2], A[3], A[4], A[5]])
+
+
+for g in range(5):
+        plt.figure('Utility vs. good')
+        gmax = 100
+        g0 = np.arange(0.0, gmax, 1.0)
+        u0 = np.zeros_like(g0)
+        agent_to_plot = 3
+        for i in range(len(g0)):
+                goods[agent_to_plot][:] = 0
+                goods[agent_to_plot][g] = g0[i]
+                u0[i] = Utility1(agent_to_plot, goods[agent_to_plot])
+
+        plt.plot(g0, u0, label='$U(g_%d)$' % g)
+        plt.legend(loc='best')
+        plt.xlabel('amount of good')
+        plt.ylabel('utility')
+
+        plt.figure('Marginal utility')
+        plt.plot(g0[1:], np.diff(u0), label=r'$\frac{\partial U}{\partial g_%d}$' % g)
+        plt.xlabel('amount of good %d' % g)
+        plt.legend(loc='best')
+        plt.ylabel(r'marginal utility $\frac{\partial U}{\partial g_i}$')
+
 plt.show()
 
 
