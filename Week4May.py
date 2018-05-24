@@ -37,7 +37,7 @@ def Utility1(my_id, my_goods, other):
 		    utility_g[i] = my_preferences[my_id][i]*(my_goods[i]/my_preferences[my_id][i]/np.sqrt((my_goods[i]/my_preferences[my_id][i])**2+1))
 		    utility_s[my_id] = aSavings[my_id]*(Bank_Account[my_id]/aSavings[my_id]/np.sqrt((Bank_Account[my_id]/aSavings[my_id])**2+1))
 	#Instantaneous utility for Agent 1 
-	utility_A1 = utility_g[0] + utility_g[1] + utility_g[2] + utility_g[3] + utility_g[4] + utility_s[my_id]
+	utility_A1 = utility_g[0] + utility_g[1] + utility_g[2] + utility_g[3] + utility_g[4] # + utility_s[my_id]
         return utility_A1
 
 # TODO
@@ -64,11 +64,10 @@ def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
 	current_good = 0
         B = 0
         A = 0
-	C = 0
-	D = 0
+	BestDeal = 0
         U = my_utilities[my_id]
-        Org = U(my_id, goods[my_id], 'a') 
-        print "Orginal Utility is ", Org
+        OriginalU = U(my_id, goods[my_id], 'a')
+        print "Orginal Utility is ", OriginalU
 	#existing Ask offers
 	for i in range(5):
 	    if offers[i][0] == 'ask':
@@ -77,11 +76,11 @@ def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
                 possible_goods[other] += 1
 		Current_Ask_U = U(my_id, possible_goods, 1)
 		print "buying from existing offers is", Current_Ask_U
-		if Current_Ask_U > Org and Current_Ask_U > C:
-		    C = Current_Ask_U
-		    choiceC = 'bid'
-		    my_priceC = offers[i][1]
-		    goodC = other
+		if Current_Ask_U > OriginalU and Current_Ask_U > BestDeal:
+		    BestDeal = Current_Ask_U
+		    choiceBestDeal = 'bid'
+		    priceBestDeal = offers[i][1]
+		    goodBestDeal = other
 	#existing Bid offers
 	for i in range(5):
 	    if offers[i][0] == 'bid':
@@ -91,17 +90,17 @@ def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
                 possible_goods[other] -= 1
 		Current_Bid_U = U(my_id, possible_goods, 1)
 		print "buying from existing offers is", Current_Bid_U
-		if Current_Bid_U > Org and Current_Bid_U > D:
+		if Current_Bid_U > OriginalU and Current_Bid_U > BestDeal:
 		    print "############################"
-		    D = Current_Bid_U
-		    choiceD = 'ask'
-		    my_priceD = offers[i][1]
-		    goodD = other
+		    BestDeal = Current_Bid_U
+		    choiceBestDeal = 'ask'
+		    priceBestDeal = offers[i][1]
+		    goodBestDeal = other
 	for i in range(5):
                 possible_goods =1*goods[my_id]
                 possible_goods[i] += 1
                 BuyingU = U(my_id, possible_goods, 'a')
-                if BuyingU > Org and BuyingU > B:
+                if BuyingU > OriginalU and BuyingU > B:
                         B = BuyingU
                         choiceB = 'bid'
                         my_priceB = randint(1,10)
@@ -110,32 +109,31 @@ def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
                 possible_goods = 1*goods[my_id]
                 possible_goods[i] -= 1
                 AskingU = U(my_id, possible_goods, 'a')
-                if AskingU > Org and AskingU > A:
+                if AskingU > OriginalU and AskingU > A:
                         A = AskingU
                         choice1 = 'ask'
                         price1 = randint(1,10)
                         good1 = i
 	print "Smart Agent Utility if Bid:", B
 	print "Smart Agent Utility if Ask:", A
-	if  A > B and A > C and A > D:
+        # Let's default to accepting any offer that seems to benefit
+        # us.  Yes, we might do better by holding out for something
+        # even more lucrative, but someone else might also snap up
+        # this offer.
+        if BestDeal > OriginalU:
+            choice = choiceBestDeal
+	    my_price = priceBestDeal
+	    good = goodBestDeal
+	    print "########################################################################################################"
+	elif A > B:
 	    choice = 'ask'
 	    my_price = price1
 	    good = good1
             print 'compare is recommending an ask'
-	elif B > A and B > C and B > D:
+	else:
 	    choice = choiceB
 	    my_price = my_priceB
-	    good = goodB 
-	elif C > A and C > B and C > D:
-	    choice = choiceC
-	    my_price = priceC
-	    good = goodC
-	    print "########################################################################################################"
-	elif D > A and D > B and D > C:
-	    choice = choiceD
-	    my_price = priceD
-	    good = goodD 
-	    print "########################################################################################################"
+	    good = goodB
         for i in range(len(offers)):
                 their_good = offers[i][2]
                 their_price = offers[i][1]
