@@ -1,18 +1,19 @@
 import numpy as np
-from random import randint
+from random import randint, expovariate
 import random
 import matplotlib.pyplot as plt
 import copy
 
 #global stuff
+tmax = 100
 agents = 15
 Numgoods = 5
 goods = np.zeros((agents,Numgoods))
 Calories = np.zeros((Numgoods,1))
 Bank_Account = np.zeros((agents))
 Q0 = 500 #minimum calories needed
-smartU = np.zeros(100)
-agentU = np.zeros((6, 100))
+smartU = np.zeros(tmax)
+agentU = np.zeros((6, tmax))
 aSavings = [10000,25000,30000,40000,500000,10000]
 #Filling out the arrays with initial values
 for i in range(agents):
@@ -21,7 +22,7 @@ for i in range(agents):
 for i in range(Numgoods):
 	Calories[i][0] = 100
 for i in range(agents):
-	Bank_Account[i] = 1000
+	Bank_Account[i] = 50
 utility_g = np.zeros(len(goods))
 utility_s = np.zeros(agents)
 
@@ -54,7 +55,7 @@ def update(my_id):
 
 def shufflerange(n):
         return random.sample(range(n), k=n)
-        
+
 def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
         # ~ choice, my_price, good = compare(my_id)
         print old_transaction
@@ -62,8 +63,8 @@ def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
         my_price = 0
         good = 0
 	current_good = 0
-        B = 0
-        A = 0
+        BidU = -1e300
+        AskU = -1e300
 	BestDeal = 0
         U = my_utilities[my_id]
         OriginalU = U(my_id, goods[my_id], 'a')
@@ -76,7 +77,7 @@ def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
                 possible_goods[other] += 1
 		Current_Ask_U = U(my_id, possible_goods, 1)
 		print "buying from existing offers is", Current_Ask_U
-		if Current_Ask_U > OriginalU and Current_Ask_U > BestDeal:
+		if Current_Ask_U > OriginalU and Current_Ask_U > BestDeal and offers[i][1] <= Bank_Account[my_id]:
 		    BestDeal = Current_Ask_U
 		    choiceBestDeal = 'bid'
 		    priceBestDeal = offers[i][1]
@@ -84,14 +85,12 @@ def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
 	#existing Bid offers
 	for i in range(5):
 	    if offers[i][0] == 'bid':
-		print "############################"
 		other = offers[i][2]
 		possible_goods =1*goods[my_id]
                 possible_goods[other] -= 1
 		Current_Bid_U = U(my_id, possible_goods, 1)
 		print "buying from existing offers is", Current_Bid_U
 		if Current_Bid_U > OriginalU and Current_Bid_U > BestDeal:
-		    print "############################"
 		    BestDeal = Current_Bid_U
 		    choiceBestDeal = 'ask'
 		    priceBestDeal = offers[i][1]
@@ -100,52 +99,116 @@ def smart_agent(my_id, offers, old_offers, old_transaction, my_preferences):
                 possible_goods =1*goods[my_id]
                 possible_goods[i] += 1
                 BuyingU = U(my_id, possible_goods, 'a')
-                if BuyingU > OriginalU and BuyingU > B:
-                        B = BuyingU
-                        choiceB = 'bid'
-                        my_priceB = randint(1,10)
+                if BuyingU > OriginalU and BuyingU > BidU and Bank_Account[my_id] > 0:
+                        BidU = BuyingU
+                        my_priceB = randint(1,Bank_Account[my_id])
                         goodB = i
 	for i in range(5):
                 possible_goods = 1*goods[my_id]
                 possible_goods[i] -= 1
                 AskingU = U(my_id, possible_goods, 'a')
-                if AskingU > OriginalU and AskingU > A:
-                        A = AskingU
+                if AskingU > AskU:
+                        AskU = AskingU
                         choice1 = 'ask'
                         price1 = randint(1,10)
                         good1 = i
-	print "Smart Agent Utility if Bid:", B
-	print "Smart Agent Utility if Ask:", A
+	print "Smart Agent Utility if Bid:", BidU
+	print "Smart Agent Utility if Ask:", AskU
         # Let's default to accepting any offer that seems to benefit
         # us.  Yes, we might do better by holding out for something
         # even more lucrative, but someone else might also snap up
         # this offer.
         if BestDeal > OriginalU:
-            choice = choiceBestDeal
-	    my_price = priceBestDeal
-	    good = goodBestDeal
-	    print "########################################################################################################"
-	elif A > B:
-	    choice = 'ask'
-	    my_price = price1
-	    good = good1
-            print 'compare is recommending an ask'
+            print '         #### CLOSE THE DEAL!'
+            return choiceBestDeal, priceBestDeal, goodBestDeal
+	elif BidU > AskU:
+            print 'bid utility: ', BidU
+            return 'bid', my_priceB, goodB
 	else:
-	    choice = choiceB
-	    my_price = my_priceB
-	    good = goodB
-        for i in range(len(offers)):
-                their_good = offers[i][2]
-                their_price = offers[i][1]
-		if i != my_id and choice == 'bid' and offers[i][0] == 'ask' and their_good == good and their_price <= my_price:
-                        return 'bid', their_price, good
-        for i in range(len(offers)):
-                their_good = offers[i][2]
-                their_price = offers[i][1]
-		if i != my_id and choice == 'ask' and offers[i][0] == 'bid' and their_good == good and their_price >= my_price:
-                        return 'ask', their_price, good
-        return choice, my_price, good
-        
+            return 'ask', price1, good1
+        return 'none', 0, 0
+
+def clever_agent(my_id, offers, old_offers, old_transaction, my_preferences):
+        # This is an agent that tries to be sell at times, when it
+        # could help to make purchases later.
+        choice = 'none'
+        my_price = 0
+        good = 0
+	current_good = 0
+        BidU = -1e300
+        AskU = -1e300
+	BestDeal = 0
+        money_utility = 0.01 # this is in units of utility per dollar
+        U = my_utilities[my_id]
+        OriginalU = U(my_id, goods[my_id], 'a')
+        print "        Orginal Utility is ", OriginalU
+	#existing Ask offers
+	for i in range(5):
+	    if offers[i][0] == 'ask':
+                current_price = offers[i][1]
+                if current_price <= Bank_Account[my_id]:
+                    # We can ignore any asks that we can't even afford to buy
+                    other = offers[i][2]
+		    possible_goods =1*goods[my_id]
+                    possible_goods[other] += 1
+		    Current_Ask_U = U(my_id, possible_goods, 1) - current_price*money_utility
+                    print "        buying from existing offers is", Current_Ask_U
+		    if Current_Ask_U > OriginalU and Current_Ask_U > BestDeal:
+                        BestDeal = Current_Ask_U
+		        choiceBestDeal = 'bid'
+		        priceBestDeal = current_price
+		        goodBestDeal = other
+	#existing Bid offers
+	for i in range(5):
+	    if offers[i][0] == 'bid':
+		other = offers[i][2]
+                current_price = offers[i][1]
+		possible_goods =1*goods[my_id]
+                possible_goods[other] -= 1
+		Current_Bid_U = U(my_id, possible_goods, 1) + current_price*money_utility
+		print "        selling to existing offers is", Current_Bid_U
+		if Current_Bid_U > OriginalU and Current_Bid_U > BestDeal:
+		    BestDeal = Current_Bid_U
+		    choiceBestDeal = 'ask'
+		    priceBestDeal = offers[i][1]
+		    goodBestDeal = other
+        if BestDeal > OriginalU:
+                print '         #### CLOSE THE DEAL!'
+                return choiceBestDeal, priceBestDeal, goodBestDeal
+        # There is no deal that is worthwhile out there, so let's
+        # randomly decide to either put out a bid or an ask.
+        if Bank_Account[my_id] > 0 and randint(0,10) < 5:
+                # Let's try putting out a bid for a random good.
+                # Random good is better than the good we want most,
+                # because maybe noone wants to sell the good we want
+                # most, and we might be able to get our second-best
+                # good.
+                good = randint(0, Numgoods-1)
+                possible_goods =1*goods[my_id]
+                possible_goods[i] += 1
+                BuyingU = U(my_id, possible_goods, 'a')
+                break_even_price = (BuyingU - OriginalU)/money_utility
+                # We'll put out a bid that is some fraction of our
+                # break_even_price.  How hard a bargain should we
+                # drive? I have no clue.
+                price = int(break_even_price / randint(2,5))
+                if price >= 1 and price <= Bank_Account[my_id]:
+                        return 'bid', price, good
+                if price >= 1 and randint(1,10) == 3 and Bank_Account[my_id] > 0:
+                        # Occasionally, if we can't afford the above
+                        # bargain price, just try offering whatever
+                        # we've got.
+                        return 'bid', Bank_Account[my_id], good
+        # We didn't decide to bid, so we'll have to make an ask.
+        good = randint(0, Numgoods-1)
+        possible_goods =1*goods[my_id]
+        possible_goods[i] -= 1
+        SellingU = U(my_id, possible_goods, 'a')
+        break_even_price = (OriginalU - SellingU)/money_utility
+        if break_even_price > 0:
+                # pick a price that is a random factor higher than our break-even price.
+                return 'ask', int(break_even_price*(1+expovariate(2.0))), good
+
 def other(my_id, offers, old_offers, old_transactions, my_preferences):
         # ~ choice, my_price, good = compare(my_id)
         choice = 'none'
@@ -206,7 +269,7 @@ def Market(agents):
         old_transaction = [0,0,0,0,0]
         current_offers = [0,0,0,0,0]
         offers = [('none',0,0)]*len(agents)
-        while t < 100:
+        while t < tmax:
                 print 'offers are', offers
                 print 'IT IS NOW ROUND', t
                 for i in shufflerange(len(agents)):
@@ -263,16 +326,16 @@ def Market(agents):
 
                
 
-agent_names = ["stubborn_buyer", "picky_agent", "stubborn_seller", "smart_agent", "shopping_addict", "other"]
-my_agents = [stubborn_buyer, picky_agent, stubborn_seller, smart_agent, shopping_addict, other]
+agent_names = ["stubborn_buyer", "clever_agent", "stubborn_seller", "smart_agent", "shopping_addict", "other"]
+my_agents = [stubborn_buyer, clever_agent, stubborn_seller, smart_agent, shopping_addict, other]
 my_utilities = [Utility1, Utility1, Utility1, Utility1, Utility1, Utility1]
 my_preferences = [
-        [3,7,15,4,25],
-        [3,16,19,2,40],
-        [7,8,35,5,20],			#stubborn Seller
-        [10,100,17,25,5],			#smart Agent
-        [7,16,12,6,3],			#Shopping Addict
-        [3,48,39,2,4],			#other
+        [  3,  7, 15,  4, 25],
+        [100, 16, 19,  2,400], # clever agent
+        [  7,  8, 35,  5, 20], #stubborn Seller
+        [ 10,100, 17,250,  5], #smart Agent
+        [  7, 16, 12,  6,  3], #Shopping Addict
+        [  3, 48, 39,  2,  4], #other
         ]
 
 old_offers, gama = Market(my_agents)
