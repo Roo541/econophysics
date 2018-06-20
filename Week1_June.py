@@ -63,11 +63,25 @@ def clever_agent(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_t
 	BidU = 0
 	AskU = 0
 	BestDeal = 0
-	# ~ money_utility = 0.01 # this is in units of utility per dollar
-	money_utility = 1000/(Bank_Account[my_id]+1)
 	U = my_utilities[my_id]
 	OriginalU = U(my_id, goods[my_id], 'a', Bank_Account[my_id])
 	print "        Orginal Utility is ", OriginalU
+	goodsAvgPrice = [np.ceil(np.mean(g0_transaction)),
+                         np.ceil(np.mean(g1_transaction)),
+                         np.ceil(np.mean(g2_transaction)),
+                         np.ceil(np.mean(g3_transaction)),
+                         np.ceil(np.mean(g4_transaction))]
+        money_utility = 0 # this is in units of utility per dollar
+        for i in range(Numgoods):
+                if not np.isnan(goodsAvgPrice[i]):
+                        # This has never been sold before, what to do?!
+                        possible_goods =1*goods[my_id]
+                        possible_goods[i] += 1
+                        marginal_utility_i = U(my_id, possible_goods, 'a', Bank_Account[my_id]) - OriginalU
+                        if marginal_utility_i/goodsAvgPrice[i] > money_utility:
+                                money_utility = marginal_utility_i/goodsAvgPrice[i]
+        if money_utility == 0:
+	        money_utility = 1000/(Bank_Account[my_id]+1)
 	#existing Ask offers
 	for i in range(len(offers)):
 	    if offers[i][0] == 'ask':
@@ -77,7 +91,7 @@ def clever_agent(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_t
                     other = offers[i][2]
                     possible_goods =1*goods[my_id]
                     possible_goods[other] += 1
-                    Current_Ask_U = U(my_id, possible_goods, 1, Bank_Account[my_id]) - current_price*money_utility
+                    Current_Ask_U = U(my_id, possible_goods, 1, Bank_Account[my_id]-current_price) - current_price*money_utility
                     print "        buying from existing offers is", Current_Ask_U
 		    if Current_Ask_U > OriginalU and Current_Ask_U > BestDeal:
 			BestDeal = Current_Ask_U
@@ -91,7 +105,7 @@ def clever_agent(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_t
                 current_price = offers[i][1]
                 possible_goods =1*goods[my_id]
                 possible_goods[other] -= 1
-                Current_Bid_U = U(my_id, possible_goods, 1, Bank_Account[my_id]) + current_price*money_utility
+                Current_Bid_U = U(my_id, possible_goods, 1, Bank_Account[my_id]+current_price) + current_price*money_utility
                 print "        selling to existing offers is", Current_Bid_U
 		if Current_Bid_U > OriginalU and Current_Bid_U > BestDeal:
 		    BestDeal = Current_Bid_U
@@ -137,7 +151,11 @@ def clever_agent(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_t
                 
 def Agent_1(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_transaction, g3_transaction, g4_transaction, my_preferences):
         # ~ choice, my_price, good = compare(my_id)
-	goodsAvgPrice = [np.ceil(np.mean(g0_transaction)),np.ceil(np.mean(g1_transaction)),np.ceil(np.mean(g2_transaction)),np.ceil(np.mean(g3_transaction)),np.ceil(np.mean(g4_transaction))]
+	goodsAvgPrice = [np.ceil(np.mean(g0_transaction)),
+                         np.ceil(np.mean(g1_transaction)),
+                         np.ceil(np.mean(g2_transaction)),
+                         np.ceil(np.mean(g3_transaction)),
+                         np.ceil(np.mean(g4_transaction))]
 	choiceBestDeal = 0
 	priceBestDeal = 0
 	goodBestDeal =0
@@ -149,10 +167,17 @@ def Agent_1(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_transa
 	current_good = 0
 	BidU = 0
 	AskU = 0
-	money_utility = 10/(Bank_Account[my_id]+1)
-	BestDeal = 0
+	money_utility = 10/(Bank_Account[my_id]+1) # could be max over all i of (marginal utility of good i)/goodsAvgPrice[i]
 	U = my_utilities[my_id]
 	OriginalU = U(my_id, goods[my_id], 'a', Bank_Account[my_id])
+        for i in range(Numgoods):
+                if np.isnan(goodsAvgPrice[i]):
+                        # This has never been sold before, what to do?!
+                        possible_goods =1*goods[my_id]
+                        possible_goods[i] += 1
+                        marginal_utility_i = U(my_id, possible_goods, 'a', Bank_Account[my_id]) - OriginalU
+                        goodsAvgPrice[i] = int(marginal_utility_i/money_utility)+1
+	BestDeal = 0
 	#existing Ask offers
 	for i in range(len(offers)):
 	    if offers[i][0] == 'ask':
@@ -166,7 +191,6 @@ def Agent_1(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_transa
 		    BestDeal = Current_Ask_U
 		    choiceBestDeal = 'bid'
 		    priceBestDeal = offers[i][1]
-		    priceBestDeal = goodsAvgPrice[other]
 		    goodBestDeal = other
 	#existing Bid offers
 	for i in range(len(offers)):
@@ -180,7 +204,7 @@ def Agent_1(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_transa
 		if Current_Bid_U > OriginalU and Current_Bid_U > BestDeal:
 		    BestDeal = Current_Bid_U
 		    choiceBestDeal = 'ask'
-		    priceBestDeal = goodsAvgPrice[other]
+		    priceBestDeal = offers[i][1]
 		    goodBestDeal = other
     #ideal Buying 
 	for i in range(len(offers)):
@@ -201,8 +225,8 @@ def Agent_1(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_transa
                         choice1 = 'ask'
                         price1 = goodsAvgPrice[i]
                         good1 = i
-	print "Smart Agent Utility if Bid:", BidU
-	print "Smart Agent Utility if Ask:", AskU
+	print "Agent_1 Utility if Bid:", BidU
+	print "Agent_1 Utility if Ask:", AskU
         # Let's default to accepting any offer that seems to benefit
         # us.  Yes, we might do better by holding out for something
         # even more lucrative, but someone else might also snap up
@@ -235,6 +259,13 @@ def Agent_2(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_transa
 	BestDeal = 0
 	U = my_utilities[my_id]
 	OriginalU = U(my_id, goods[my_id], 'a', Bank_Account[my_id])
+        for i in range(Numgoods):
+                if np.isnan(goodsAvgPrice[i]):
+                        # This has never been sold before, what to do?!
+                        possible_goods =1*goods[my_id]
+                        possible_goods[i] += 1
+                        marginal_utility_i = U(my_id, possible_goods, 'a', Bank_Account[my_id]) - OriginalU
+                        goodsAvgPrice[i] = int(marginal_utility_i/money_utility)+1
 	#existing Ask offers
 	for i in range(len(offers)):
 	    if offers[i][0] == 'ask':
@@ -359,8 +390,8 @@ def Agent_3(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_transa
                         choice1 = 'ask'
                         price1 = randint(1,10)
                         good1 = i
-	print "Smart Agent Utility if Bid:", BidU
-	print "Smart Agent Utility if Ask:", AskU
+	print "Agent_3 Utility if Bid:", BidU
+	print "Agent_3 Utility if Ask:", AskU
         # Let's default to accepting any offer that seems to benefit
         # us.  Yes, we might do better by holding out for something
         # even more lucrative, but someone else might also snap up
@@ -386,6 +417,7 @@ def Agent_4(my_id, offers, old_offers, g0_transaction, g1_transaction, g2_transa
 def Market(agents):
         t = 0
         old_offers = []
+        transactions = Numgoods*[[]]
         g0_transaction = []
         g1_transaction = []
         g2_transaction = []
@@ -400,7 +432,10 @@ def Market(agents):
                 for i in shufflerange(len(agents)):
                         #the following sends agent i his own id and returns: choice, price, good
                         agentU[i][t] = update(i)				#updates each agents utility
-                        choice, price, good = agents[i](i, offers, old_offers, g0_transaction, g1_transaction, g2_transaction, g3_transaction, g4_transaction, my_preferences)                
+                        choice, price, good = agents[i](i, offers, old_offers, g0_transaction, g1_transaction, g2_transaction, g3_transaction, g4_transaction, my_preferences)
+                        if np.isnan(price):
+                                print "CRAZY NAN", i, choice, price, good
+                                exit(1)
                         offers[i] = (choice, price, good)											#starts with agent0
                         if choice == 'ask':
                                 print '   *** ', agent_names[i], i, 'asks',  np.ceil(price), 'for good', good
@@ -418,6 +453,7 @@ def Market(agents):
                                                                 Bank_Account[j] = Bank_Account[j] - price
                                                                 offers[i] = ('none',0,0)
                                                                 offers[j] = ('none',0,0)
+                                                                transactions[good].append((i, j, price))
                                                                 if good == 0:
 									g0_transaction.append(price)
 								elif good == 1:
@@ -445,6 +481,7 @@ def Market(agents):
                                                                 Bank_Account[j] = Bank_Account[j] + price
                                                                 offers[i] = ('none',0,0)
                                                                 offers[j] = ('none',0,0)
+                                                                transactions[good].append((j, i, price))
 								if good == 0:
 									g0_transaction.append(price)
 								elif good == 1:
@@ -473,11 +510,11 @@ agent_names = [ "clever_agent", "Agent_1", "Agent_2", "Agent_3", "Agent_4"]
 my_agents = [clever_agent, Agent_1, Agent_2, Agent_3, Agent_4 ]
 my_utilities = [Utility1, Utility1, Utility1, Utility1, Utility1]
 my_preferences = [
-        [150, 200, 19,  20, 40], # clever agent
-        [ 10, 10, 17, 25,  5], #Agent_1
-        [  7, 160, 120,  6,  3], #Agent_2
-        [50, 30, 700, 25, 50],  #Agent_3
-	[7, 20, 35, 150, 300]	#Agent_4
+        [200, 20, 20, 20, 20], # clever agent
+        [ 20,200, 20, 20, 20], #Agent_1
+        [ 20, 20,200, 20, 20], #Agent_2
+        [ 20, 20, 20,200, 20],  #Agent_3
+	[ 20, 20, 20, 20,200]	#Agent_4
         ]
 
 old_offers, gama, dummy = Market(my_agents)
