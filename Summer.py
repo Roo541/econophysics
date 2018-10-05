@@ -6,7 +6,7 @@ import copy
 import math
 
 #global stuff
-tmax = 1000
+tmax = 10000
 agents = 15
 Numgoods = 5
 goods = np.zeros((agents,Numgoods))
@@ -17,7 +17,7 @@ agentU = np.zeros((6, tmax))
 #Filling out the arrays with initial values
 for i in range(agents):
 	for j in range(Numgoods):
-		goods[i][j]= 10
+		goods[i][j]= 100
 for i in range(agents):
 	Bank_Account[i] = 1000
 utility_g = np.zeros(len(goods))
@@ -30,7 +30,7 @@ def Utility1(my_id, my_goods):
 		utility_g[i] = my_preferences[my_id][i]*(my_goods[i]/my_preferences[my_id][i]/np.sqrt((my_goods[i]/my_preferences[my_id][i])**2+1))
 
 	#Instantaneous utility for Agent 1 
-	utility_A1 = utility_g[0] + utility_g[1] + utility_g[2] + utility_g[3] + utility_g[4] + np.log10(np.abs(value)+1)
+	utility_A1 = utility_g[0] + utility_g[1] + utility_g[2] + utility_g[3] + utility_g[4] # + np.log10(np.abs(value)+1)
 	return utility_A1
 
 def update(my_id):
@@ -163,19 +163,25 @@ def Smart_Agent_2(my_id, offers, old_offers, old_transactions, my_preferences):
 	good = 0
 	B = 0
 	A = 0
-	greed = 100
-	Mu = greed/(Bank_Account[my_id]+1)
 	U = my_utilities[my_id]
 	Org = U(my_id, goods[my_id]) 
+	greed = 100
+	Mu = greed/(Bank_Account[my_id]+1)
+        Mu = 0
+        for g in range(5):
+                possible_goods = 1*goods[my_id]
+		possible_goods[g] += 1
+		marginalU = U(my_id, possible_goods) - Org
+                Mu = max(Mu, marginalU/box[g][2])
 	print "Orginal Utility for SMART AGENT 2 is ", Org
-	if randint(0,3) == 1:
+	if randint(0,3) == 1 or True:
 		print 'compare is recommending take an existing offer ###########'			#Makes an offer on existing offers available 
 		for i in range(len(offers)):		
 			a,b,c = offers[i]
 			if a == 'ask' and i != my_id:
 				possible_goods = 1*goods[my_id]
 				possible_goods[c] += 1
-				BuyingU = U(my_id, possible_goods)
+				BuyingU = U(my_id, possible_goods) - b*Mu
 				if BuyingU > Org and BuyingU > B:
 					B = BuyingU
 					choice = 'bid'
@@ -184,7 +190,7 @@ def Smart_Agent_2(my_id, offers, old_offers, old_transactions, my_preferences):
 			if a == 'bid' and i != my_id:
 				possible_goods = 1*goods[my_id]
 				possible_goods[c] -= 1
-				AskingU = U(my_id, possible_goods)
+				AskingU = U(my_id, possible_goods) + b*Mu
 				if AskingU > Org and AskingU > A:
 					A = AskingU
 					choice1 = 'ask'
@@ -194,50 +200,28 @@ def Smart_Agent_2(my_id, offers, old_offers, old_transactions, my_preferences):
 			return 'bid', my_price, good
 		if A > B:
 			return 'ask', my_price1, good1
-		if Org > B and Org > A:
-			return 'none', 0, 0
-	for i in range(5):
+        if randint(0,2) == 1 and Bank_Account[my_id] > 0:
+                # Let's make a bid!
+                i = randint(0,4)
+                # FUTURE: only want to bid on goods others have.
+                # FUTURE: possibly use historical prices to guess what people will want to sell.
 		possible_goods =1*goods[my_id]
-		possible_goods[i] += 1										#is this the correct indexing? or is the utility being adjusted for all goods added as calculated
-		BuyingU = U(my_id, possible_goods) - box[i][2]*Mu
-		if BuyingU > Org and BuyingU > B:
-			choice = 'bid'
-			price = int(math.ceil(box[i][2]))			#Must use a relevant price for my bid
-			good0 = i
-			B = BuyingU 
-	for i in range(5):
-		possible_goods = 1*goods[my_id]
-		possible_goods[i] -= 1
-		AskingU = U(my_id, possible_goods) + box[i][2]*Mu
-		if AskingU > Org and AskingU > A:
-			choice1 = 'ask'
-			price1 = int(math.ceil(box[i][2]))			#Must use relevant price for my ask
-			good1 = i
-			A = AskingU 
-	print "SMART AGENT 2 Utility if Bid:", B
-	print "SMART AGENT 2 Utility if Ask:", A
-	if B > A and B > Org:
-		choice = 'bid'
-		my_price = price
-		good = good0
-		print 'compare is recommending a bid for SMART AGENT 2'
-		for i in range(len(offers)):			#Going through offers and setting them to their_good place holder
-			their_good = offers[i][2]
-			their_price = offers[i][1]
-			if i != my_id and offers[i][0] == 'ask' and their_good == good and their_price <= my_price:
-				return 'bid', their_price, their_good
-		return 'bid', my_price, good
-	if A > B and A > Org:
-		choice = 'ask'
-		my_price = price1
-		good = good1
-		print 'compare is recommending an ask for SMART AGENT 2'
-		for i in range(len(offers)):			#Going through offers and setting them to their_good place holder
-			their_good = offers[i][2]
-			their_price = offers[i][1]
-			if i != my_id and offers[i][0] == 'bid' and their_good == good and their_price >= my_price:
-				return 'ask', their_price, their_good
-		return 'ask', my_price, good
+		possible_goods[i] += 1
+                break_even_price = (U(my_id, possible_goods) - Org)/Mu
+                if break_even_price >= 1:
+		        price = randint(1, int(break_even_price)) # FIXME we should be smarter
+		        return 'bid', price, i
+
+        i = randint(0,4)
+        # FUTURE: only want to ask on goods we have.
+        # FUTURE: possibly use historical prices to guess what people will want to buy?
+	possible_goods = 1*goods[my_id]
+	possible_goods[i] -= 1
+        break_even_price = (Org - U(my_id, possible_goods))/Mu
+        if break_even_price >= 1:
+                price = randint(int(break_even_price)+1, 5*(int(break_even_price)+1))
+                return 'ask', price, i
+        return 'none',0,0
 
 #Only Buys good 0 and Sells good 4
 def picky_agent(my_id, offers, old_offers, old_transactions, my_preferences):
@@ -320,15 +304,15 @@ def Market(agents):
 	return t
 
 agent_names = ["Smart_Agent_2", "picky_agent", "stubborn_seller", "smart_agent", "shopping_addict", "other"]
-my_agents = [Smart_Agent_2, picky_agent, stubborn_seller, smart_agent, shopping_addict, other]
+my_agents = [Smart_Agent_2, Smart_Agent_2, stubborn_seller, smart_agent, shopping_addict, other]
 my_utilities = [Utility1, Utility1, Utility1, Utility1, Utility1, Utility1]
 my_preferences = [
-	[3,7,15,4,25],		#Smart_Agent_2
-	[3,16,19,2,40],			#picky_agent
-	[7,8,35,5,20],			#stubborn Seller
-	[1,3,7,2,1],		#smart Agent
-	[7,16,12,6,3],			#Shopping Addict
-	[4,4,3,2,4],			#other
+	[20,5,5,5,5],		#Smart_Agent_2
+	[5,20,5,5,5],			#picky_agent
+	[5,5,20,5,5],			#stubborn Seller
+	[5,5,5,20,5],		#smart Agent
+	[20,5,5,5,5],			#Shopping Addict
+	[5,5,5,5,20],			#other
 		]
 old_offers = Market(my_agents)
 
