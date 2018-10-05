@@ -6,7 +6,7 @@ import copy
 import math
 
 #global stuff
-tmax = 100
+tmax = 1000
 agents = 15
 Numgoods = 5
 goods = np.zeros((agents,Numgoods))
@@ -112,7 +112,6 @@ def smart_agent(my_id, offers, old_offers, old_transactions, my_preferences):
 
 #only makes or takes existing offers       
 def other(my_id, offers, old_offers, old_transactions, my_preferences):
-	# ~ choice, my_price, good = compare(my_id)
 	choice = 'none'
 	my_price = 0
 	good = 0
@@ -133,17 +132,22 @@ def other(my_id, offers, old_offers, old_transactions, my_preferences):
 				B = BuyingU
 				choice = 'bid'
 				my_price = b
-				good = c
+				good = c 
 		if a == 'bid' and i != my_id:
 			possible_goods = 1*goods[my_id]
 			possible_goods[c] -= 1
 			AskingU = U(my_id, possible_goods)
 			if AskingU > Org and AskingU > A:
 				A = AskingU
-				choice = 'ask'
-				my_price = b
-				good = c
-	return choice, my_price, good
+				choice1 = 'ask'
+				my_price1 = b
+				good1 = c
+	if B > A: 
+		return 'bid', my_price, good
+	if A > B:
+		return 'ask', my_price1, good1
+	if Org > B and Org > A:
+		return 'none', 0, 0
 
 def stubborn_seller(my_id, offers, old_offers, old_transactions, my_preferences):
 	goodnum = randint(0,4)
@@ -171,22 +175,27 @@ def Smart_Agent_2(my_id, offers, old_offers, old_transactions, my_preferences):
 			if a == 'ask' and i != my_id:
 				possible_goods = 1*goods[my_id]
 				possible_goods[c] += 1
-				BuyingU = U(my_id, possible_goods) -  box[c][2]*Mu
+				BuyingU = U(my_id, possible_goods)
 				if BuyingU > Org and BuyingU > B:
 					B = BuyingU
 					choice = 'bid'
 					my_price = b
-					good = c
+					good = c 
 			if a == 'bid' and i != my_id:
 				possible_goods = 1*goods[my_id]
 				possible_goods[c] -= 1
-				AskingU = U(my_id, possible_goods) + box[c][2]*Mu
+				AskingU = U(my_id, possible_goods)
 				if AskingU > Org and AskingU > A:
 					A = AskingU
-					choice = 'ask'
-					my_price = b
-					good = c
-		return choice, my_price, good
+					choice1 = 'ask'
+					my_price1 = b
+					good1 = c
+		if B > A: 
+			return 'bid', my_price, good
+		if A > B:
+			return 'ask', my_price1, good1
+		if Org > B and Org > A:
+			return 'none', 0, 0
 	for i in range(5):
 		possible_goods =1*goods[my_id]
 		possible_goods[i] += 1										#is this the correct indexing? or is the utility being adjusted for all goods added as calculated
@@ -250,7 +259,7 @@ def shopping_addict(my_id, offers, old_offers, old_transactions, my_preferences)
 	for i in range(len(offers)):
 		if i != my_id and offers[i][0] == 'ask':
 			return 'bid', offers[i][1], offers[i][2] 	#shopping addict just returns a. Wants to buy anything
-		print "  &&&&&   NOTHING TO BUY, I'm SO SAD!", offers
+	print "  &&&&&   NOTHING TO BUY, I'm SO SAD!", offers
 	return 0,0,0
 
 def Market(agents):
@@ -305,7 +314,7 @@ def Market(agents):
 								send(price,good)
 								break
 			if choice == 'none':
-				print '   *** ', agent_names[i], i, 'makes no offer'
+				print '   *** ', agent_names[i], i, 'makes no offer##################################################**********************'
 		t = t + 1
 		old_offers.append(copy.copy(offers))
 	return t
