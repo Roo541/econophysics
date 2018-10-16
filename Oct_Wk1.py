@@ -6,7 +6,7 @@ import copy
 import math
 
 #global stuff
-tmax = 25000
+tmax = int(1e4)
 agents = 15
 Numgoods = 5
 goods = np.zeros((agents,Numgoods))
@@ -17,9 +17,9 @@ agentU = np.zeros((10, tmax))
 #Filling out the arrays with initial values
 for i in range(agents):
 	for j in range(Numgoods):
-		goods[i][j]= 100
+		goods[i][j]= 1000
 for i in range(agents):
-	Bank_Account[i] = 10000
+	Bank_Account[i] = 100
 utility_g = np.zeros(len(goods))
 
 def Utility1(my_id, my_goods):
@@ -50,6 +50,133 @@ def send(price,good):				#Gives a reasonable price for good based on past transa
 def shufflerange(n):
 	return random.sample(range(n), k=n)
 
+def highest_recent_bid(good, old_offers):
+        highest_bid = 0
+        for offers in old_offers[-3*Numgoods:]:
+                for offer in offers:
+                        if offer[0] == 'bid' and offer[2] == good:
+                                highest_bid = max(highest_bid, offer[1])
+        return highest_bid
+
+def lowest_recent_ask(good, old_offers):
+        lowest_ask = 1e12
+        for offers in old_offers[-3*Numgoods:]:
+                for offer in offers:
+                        if offer[0] == 'ask' and offer[2] == good:
+                                lowest_ask = min(lowest_ask, offer[1])
+        return lowest_ask
+
+def random_good():
+        return randint(0,Numgoods-1)
+
+def intelligent_agent(my_id, offers, old_offers, old_transactions, my_preferences):
+        offers = 1*offers
+        offers[my_id] = ('none', 0, 0) # just to avoid accidentally responding to myself.
+	U = my_utilities[my_id]
+	Org = U(my_id, goods[my_id])
+        richest = 0
+        for i in range(len(Bank_Account)):
+                if i != my_id:
+                        richest = max(richest, Bank_Account[i])
+	Mu = 0
+	for g in range(Numgoods):
+		possible_goods = 1*goods[my_id]
+		possible_goods[g] += 1
+		marginalU = U(my_id, possible_goods) - Org
+                lowest_ask = lowest_recent_ask(g, old_offers+[offers])
+		Mu = max(Mu, marginalU/(2.0*lowest_ask)) # devalue money a factor of two
+	# Go through existing offers to see whether anyone is selling
+	# and at what prices:
+        highest_price = 0
+	for what, price, good in offers:
+		if what == 'ask':
+                        highest_price = max(highest_price, price)
+        if highest_price < Bank_Account[my_id]/2:
+                # Everything is a bargain, so buy whatever we like
+                # most, without regard to price!
+                best_buy = 0
+                best_price = 0
+                best_good = 0
+	        for what, price, good in offers:
+		        if what == 'ask':
+			        possible_goods = 1*goods[my_id]
+			        possible_goods[good] += 1
+			        BuyingU = U(my_id, possible_goods)
+                                if BuyingU > best_buy:
+                                        best_buy = BuyingU
+                                        best_price = price
+                                        best_good = good
+                if best_buy > 0:
+                        return 'bid', best_price, best_good
+	# Looks like we might be running short on cash, so we should
+	# consider selling. Go through existing offers to see what is
+	# best.
+        best_deal = 0
+        best_choice = 'none'
+        best_price = 0
+        best_good = 0
+	for what, price, good in offers:
+		if what == 'ask' and price < Bank_Account[my_id]:
+			possible_goods = 1*goods[my_id]
+			possible_goods[good] += 1
+			BuyingU = U(my_id, possible_goods) - price*Mu
+			if BuyingU > best_deal:
+				best_deal = BuyingU
+				best_choice = 'bid'
+				best_price = price
+				best_good = good
+		if what == 'bid':
+			possible_goods = 1*goods[my_id]
+			possible_goods[good] -= 1
+			AskingU = U(my_id, possible_goods) + price*Mu
+			if AskingU > best_deal:
+				best_deal = AskingU
+				best_choice = 'ask'
+				best_price = price
+				best_good = good
+	if best_deal > Org:
+		return best_choice, best_price, best_good
+        # Let's see about making a bid!
+        best_deal = Org
+        for g in shufflerange(Numgoods):
+	        # FUTURE: only want to bid on goods others have.
+	        # FUTURE: possibly use historical prices to guess what people will want to sell.
+		possible_goods =1*goods[my_id]
+		possible_goods[g] += 1
+		break_even_price = (U(my_id, possible_goods) - best_deal)/Mu
+                lowest_ask = lowest_recent_ask(g, old_offers+[offers])
+                highest_bid = highest_recent_bid(g, old_offers+[offers])
+                if lowest_ask < break_even_price and lowest_ask < Bank_Account[my_id]:
+                        # If someone has been offering a good deal
+                        # recently (but not this turn) see if they are
+                        # still willing!
+                        return 'bid', lowest_ask, g
+		if int(break_even_price-1) > 1 and highest_recent_bid < int(break_even_price-1) and Bank_Account[my_id] > break_even_price:
+                        # pick a price that is higher than the most
+                        # recent high bid, in hopes of attracting a
+                        # seller.
+		        price = randint(highest_bid, int(break_even_price-1))
+                        if price > 0:
+			        return 'bid', price, g
+        # Looks like we can't even afford to make a decent bid, so
+        # let's see if we can scrap together some money.
+        for g in shufflerange(Numgoods):
+	        if goods[my_id][g] >= 0:
+		        possible_goods = 1*goods[my_id]
+		        possible_goods[g] -= 1
+		        break_even_price = (Org - U(my_id, possible_goods))/Mu
+                        lowest_ask = lowest_recent_ask(g, old_offers+[offers])
+                        highest_bid = highest_recent_bid(g, old_offers+[offers])
+                        if highest_bid > break_even_price:
+                                # Someone has been recently asking for
+                                # this good at a decent price, so
+                                # let's see if they'll buy it again!
+                                return 'ask', highest_bid, g
+		        if break_even_price >= 1 and lowest_ask > break_even_price+1 and int(break_even_price)+1 < richest:
+                                price = randint(int(break_even_price)+1, min(lowest_ask, richest))
+			        return 'ask', price, g
+	return 'none',0,0
+
 def smart_agent(my_id, offers, old_offers, old_transactions, my_preferences):
 	choice = 'none'
 	my_price = 0
@@ -69,7 +196,7 @@ def smart_agent(my_id, offers, old_offers, old_transactions, my_preferences):
 		possible_goods =1*goods[my_id]
 		possible_goods[i] += 1										#is this the correct indexing? or is the utility being adjusted for all goods added as calculated
 		BuyingU = U(my_id, possible_goods) - box[i][2]*Mu
-		if BuyingU > Org and BuyingU > B:
+		if BuyingU > Org and BuyingU > B and int(math.ceil(box[i][2])) <= Bank_Account[my_id]:
 			choice = 'bid'
 			price = int(math.ceil(box[i][2]))			#Must use a relevant price for my bid
 			good0 = i
@@ -303,7 +430,7 @@ def Smart_Agent_3(my_id, offers, old_offers, old_transactions, my_preferences):
 #Shopping addict
 def shopping_addict(my_id, offers, old_offers, old_transactions, my_preferences):
 	for i in range(len(offers)):
-		if i != my_id and offers[i][0] == 'ask':
+		if i != my_id and offers[i][0] == 'ask' and offers[i][1] <= Bank_Account[my_id]:
                         return 'bid', offers[i][1], offers[i][2] 	#shopping addict just returns a. Wants to buy anything
 	#print "  &&&&&   NOTHING TO BUY, I'm SO SAD!", offers
 	return 0,0,0
@@ -365,44 +492,42 @@ def Market(agents):
 		old_offers.append(copy.copy(offers))
 	return t
 
-agent_names = ["S2",
-               "S2",
-               "stubbor_seller_2",
-               "S2",
+agent_by_name = {
+        "intelligent_agent": intelligent_agent,
+        "S3": Smart_Agent_3,
+        "S1": smart_agent,
+        "shopping_addict": shopping_addict,
+        "stubborn_seller": stubborn_seller,
+}
+agent_names = ["intelligent_agent",
+               "intelligent_agent",
+               "intelligent_agent",
+               "S3",
                "shopping_addict",
-               "stubborn_seller",
+               "S1",
                "S1",
                "S3",
                "S3",
                "S1"]
 #my_agents = [Smart_Agent_2, Smart_Agent_2, stubborn_seller, smart_agent, shopping_addict, other]
-my_agents = [Smart_Agent_2,
-             Smart_Agent_2,
-             Smart_Agent_2, # stubborn_seller_2,
-             Smart_Agent_2,
-             shopping_addict,
-             smart_agent, # stubborn_seller,
-             smart_agent,
-             Smart_Agent_3,
-             Smart_Agent_3,
-             smart_agent]
+my_agents = [agent_by_name[name] for name in agent_names]
 my_utilities = [Utility1, Utility1, Utility1, Utility1, Utility1, Utility1, Utility1, Utility1, Utility1, Utility1]
 my_preferences = [
-	[20,5,5,5,5],		#Smart_Agent_2
-	[5,20,5,5,5],			#S
-	[5,5,20,5,5],			#stubbor_seller_2
-	[5,5,5,20,5],			#other
-	[5,5,5,5,20],			#Shopping Addict
-	[5,20,5,5,5],			#stubborn_seller
-	[5,5,20,5,5],			#smart_agent
-	[5,5,5,20,5],			#s
-	[5,5,5,5,20],			#s
-	[20,5,5,5,5]			#s1
+	[200,5,5,5,5],		#Smart_Agent_2
+	[5,200,5,5,5],			#S
+	[5,5,200,5,5],			#stubbor_seller_2
+	[5,5,5,200,5],			#other
+	[5,5,5,5,200],			#Shopping Addict
+	[5,200,5,5,5],			#stubborn_seller
+	[5,5,200,5,5],			#smart_agent
+	[5,5,5,200,5],			#s
+	[5,5,5,5,200],			#s
+	[200,5,5,5,5]			#s1
 		]
 old_offers = Market(my_agents)
 
 for i in range(len(my_agents)):
-	print '  -- ', goods[i], agent_names[i], i, Bank_Account[i]
+	print '  -- ', goods[i], agent_names[i], i, Bank_Account[i], my_utilities[i](i, goods[i])
 print Bank_Account[:len(my_agents)]
 a0 = 0
 a1 = 0
@@ -419,13 +544,17 @@ A = [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9]
 #graphing smart agents utility 
 for i in range(len(my_agents)):
 	if i != 2 and i != 5:
-                style = '-'
+                style = ':'
+                if agent_names[i] == 'intelligent_agent':
+                        style = 'k-'
                 if agent_names[i] == 'S1':
-                        style = '--'
+                        style = 'r--'
+                if agent_names[i] == 'S1':
+                        style = 'r--'
                 if agent_names[i] == 'S2':
-                        style = ':'
+                        style = 'g--'
                 if agent_names[i] == 'S3':
-                        style = '-.'
+                        style = 'b-.'
 		A[i], = plt.plot(agentU[i][:], style, label = agent_names[i]) 
 		plt.title('smart agents utility')
 		plt.xlabel('time')
