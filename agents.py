@@ -152,7 +152,7 @@ def intelligent_agent(my_id, offers, old_offers, old_transactions, my_preference
         # Looks like we can't even afford to make a decent bid, so
         # let's see if we can scrap together some money.
         for g in shufflerange(Numgoods):
-	        if goods[my_id][g] >= 0:
+	        if goods[my_id][g] > 0:
 		        possible_goods = 1*goods[my_id]
 		        possible_goods[g] -= 1
 		        break_even_price = (Org - U(my_id, possible_goods))/Mu
