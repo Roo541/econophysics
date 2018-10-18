@@ -17,7 +17,7 @@ agentU = np.zeros((10, tmax))
 #Filling out the arrays with initial values
 for i in range(agents):
 	for j in range(Numgoods):
-		goods[i][j]= 1000
+		goods[i][j]= 100
 for i in range(agents):
 	Bank_Account[i] = 100
 utility_g = np.zeros(len(goods))
@@ -91,7 +91,7 @@ def intelligent_agent(my_id, offers, old_offers, old_transactions, my_preference
 	for what, price, good in offers:
 		if what == 'ask':
                         highest_price = max(highest_price, price)
-        if highest_price < Bank_Account[my_id]/2:
+        if highest_price < Bank_Account[my_id]/10:
                 # Everything is a bargain, so buy whatever we like
                 # most, without regard to price!
                 best_buy = 0
@@ -175,6 +175,19 @@ def intelligent_agent(my_id, offers, old_offers, old_transactions, my_preference
 		        if break_even_price >= 1 and lowest_ask > break_even_price+1 and int(break_even_price)+1 < richest:
                                 price = randint(int(break_even_price)+1, min(lowest_ask, richest))
 			        return 'ask', price, g
+        # This means that noone has been offering to sell *anything*
+        # recently.  In this case we will need to decide what the
+        # situation is.  Either we are at the beginning and we may
+        # just need to get things started, or we are at the end and
+        # everyone has all that they want of each good.  In either
+        # case, let's just ask for most of the money that anyone has,
+        # and let's just pick a random good to sell at this price.
+        for g in shufflerange(Numgoods):
+	        if goods[my_id][g] >= 0:
+                        price = randint(int(richest/2), richest)
+                        if price < 1:
+                                price = 1
+			return 'ask', price, g
 	return 'none',0,0
 
 def smart_agent(my_id, offers, old_offers, old_transactions, my_preferences):
@@ -494,21 +507,22 @@ def Market(agents):
 
 agent_by_name = {
         "intelligent_agent": intelligent_agent,
+        "ia": intelligent_agent,
         "S3": Smart_Agent_3,
         "S1": smart_agent,
         "shopping_addict": shopping_addict,
         "stubborn_seller": stubborn_seller,
 }
-agent_names = ["intelligent_agent",
-               "intelligent_agent",
-               "intelligent_agent",
-               "S3",
-               "shopping_addict",
-               "S1",
-               "S1",
-               "S3",
-               "S3",
-               "S1"]
+agent_names = ["ia",
+               "ia",
+               "ia",
+               "ia",
+               "ia",
+               "ia",
+               "ia",
+               "ia",
+               "ia",
+               "ia"]
 #my_agents = [Smart_Agent_2, Smart_Agent_2, stubborn_seller, smart_agent, shopping_addict, other]
 my_agents = [agent_by_name[name] for name in agent_names]
 my_utilities = [Utility1, Utility1, Utility1, Utility1, Utility1, Utility1, Utility1, Utility1, Utility1, Utility1]
@@ -517,11 +531,11 @@ my_preferences = [
 	[5,200,5,5,5],			#S
 	[5,5,200,5,5],			#stubbor_seller_2
 	[5,5,5,200,5],			#other
-	[5,5,5,5,200],			#Shopping Addict
+	[5,5,5,200,5],			#Shopping Addict
 	[5,200,5,5,5],			#stubborn_seller
 	[5,5,200,5,5],			#smart_agent
 	[5,5,5,200,5],			#s
-	[5,5,5,5,200],			#s
+	[5,5,5,200,5],			#s
 	[200,5,5,5,5]			#s1
 		]
 old_offers = Market(my_agents)
