@@ -22,6 +22,19 @@ def Utility1(my_id, my_goods):
 		U += my_preferences[my_id][i]*(my_goods[i]/my_preferences[my_id][i]/np.sqrt((my_goods[i]/my_preferences[my_id][i])**2+1))
 	return U
 
+def marginal_utilities(my_id, my_goods):
+        U = my_utilities[my_id]
+        Org = U(my_id, my_goods)
+        dg = 0.01
+        marginal = np.zeros(Numgoods)
+        for i in range(Numgoods):
+                plus = 1.0*my_goods
+                plus[i] += dg
+                minus = 1.0*my_goods
+                minus[i] -= dg
+                marginal[i] = (U(my_id, plus) - U(my_id, minus))/(2*dg)
+        return marginal
+
 my_utilities = max_agents*[Utility1]
 
 def update(my_id):
