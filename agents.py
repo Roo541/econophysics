@@ -507,4 +507,7 @@ agent_by_name = {
         "S3": Smart_Agent_3,
         "shopping_addict": shopping_addict,
         "stubborn_seller": stubborn_seller,
+        "A": intelligent_agent,
+        "B": intelligent_agent,
+        "C": intelligent_agent,
 }
