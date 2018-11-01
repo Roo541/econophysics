@@ -118,7 +118,7 @@ plt.legend()
 	# ~ plt.ylabel(r'marginal utility $\frac{\partial U}{\partial g_i}$')
 
 print agents.box
-plt.savefig(filename_base+'.svg')
+plt.savefig(filename_base+'.png', dpi=150)
 plt.show()
 #search past 10 rounds for highest bid and lowest ask of all goods
 # ~ hi = 0
