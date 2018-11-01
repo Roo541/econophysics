@@ -6,7 +6,7 @@ import copy
 import math
 
 #global stuff
-max_agents = 15
+max_agents = 1000
 Numgoods = 5
 goods = np.zeros((max_agents,Numgoods))
 Bank_Account = np.zeros((max_agents))
@@ -443,7 +443,7 @@ def shopping_addict(my_id, offers, old_offers, old_transactions, my_preferences,
 
 def Market(agent_names, tmax):
         agents = [agent_by_name[name] for name in agent_names]
-        agentU = np.zeros((10, tmax))
+        agentU = np.zeros((max_agents, tmax))
 	t = 0
 	old_offers = []
 	old_transactions = []
