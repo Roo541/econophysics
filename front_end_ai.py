@@ -45,8 +45,9 @@ for i in range(num_agents):
         for g in range(agents.Numgoods):
                 print 'agent', i, 'good', g, 'mu', marginal[g]/agents.box[g][3]
 
+filename_base = 'test'
 #Saves Data onto Excel file
-myFile = open('test.csv', 'w')
+myFile = open(filename_base+'.csv', 'w')
 with myFile:
         writer = csv.writer(myFile, lineterminator='\n')
         writer.writerow(('Initial Conditions', 'goods = %d' %i_g, 'Bank_Account = %d' %i_ba,))
@@ -117,6 +118,7 @@ plt.legend()
 	# ~ plt.ylabel(r'marginal utility $\frac{\partial U}{\partial g_i}$')
 
 print agents.box
+plt.savefig(filename_base+'.png', dpi=150)
 plt.show()
 #search past 10 rounds for highest bid and lowest ask of all goods
 # ~ hi = 0

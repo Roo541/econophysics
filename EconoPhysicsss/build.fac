@@ -1,3 +1,0 @@
-| g++ -g -O2 -Wall -o econo EconoPhysicsss.cpp
-
-# | g++ -g -O2 -Werror -Wall -o econo EconoPhysicsss.cpp
