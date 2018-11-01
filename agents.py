@@ -10,8 +10,8 @@ max_agents = 15
 Numgoods = 5
 goods = np.zeros((max_agents,Numgoods))
 Bank_Account = np.zeros((max_agents))
-box = np.zeros((Numgoods, 3))
-box[:][:] = 10
+box = np.zeros((Numgoods, 4))
+box[:][:]= 10
 utility_g = np.zeros(len(goods))
 
 def Utility1(my_id, my_goods):
@@ -43,12 +43,11 @@ def update(my_id):
 	return update
 
 def send(price,good):				#Gives a reasonable price for good based on past transactions
-	if box[good][0] == 0:
-		box[good][1] = price
 	box[good][0] = box[good][1]
-	box[good][1] = price
-	box[good][2] = (box[good][0]+box[good][1])/2
-	reasonable_price = box[good][2]
+	box[good][1] = box[good][2]
+        box[good][2] = price
+	box[good][3] = (box[good][0]+box[good][1]+box[good][2])/3
+	reasonable_price = box[good][3]
 	return reasonable_price
 
 def shufflerange(n):
